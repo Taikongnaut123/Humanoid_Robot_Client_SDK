@@ -16,8 +16,6 @@ find_package(gRPC REQUIRED)
 # endif()
 
 add_library(robot_client SHARED
-    client_base.cpp
-    client_stud.cpp
     interfaces_client.cpp)
 message(CLIENT_SDK_COMMON_INCLUDE_DIR: ${CLIENT_SDK_COMMON_INCLUDE_DIR})
 
@@ -31,8 +29,8 @@ target_include_directories(
 # 链接必要的库
 target_link_libraries(robot_client
     PUBLIC
-    libinterfaces
-    libcommon
+    libinterfacesPB
+    libcommonPB
     protobuf::libprotobuf
     gRPC::grpc++
 )

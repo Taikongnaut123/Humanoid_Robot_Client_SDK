@@ -2,8 +2,8 @@
  * Copyright (c) 2025 Humanoid Robot, lnc.  All rights reserved.
  */
 
-#ifndef HUMANOID_ROBOT_SDK_H
-#define HUMANOID_ROBOT_SDK_H
+#ifndef HUMANOID_ROBOT_COMMON_STATUS_H
+#define HUMANOID_ROBOT_COMMON_STATUS_H
 #include <string>
 #include <system_error>
 
@@ -53,4 +53,4 @@ namespace humanoid_robot
     } // namespace common
 
 } // namespace humanoid_robot
-#endif // HUMANOID_ROBOT_SDK_H
+#endif // HUMANOID_ROBOT_COMMON_STATUS_H

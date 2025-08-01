@@ -205,7 +205,7 @@ void ExampleConnectionManagement()
 
     // Create client using convenience function
     std::unique_ptr<InterfacesClient> client;
-    auto status = CreateInterfacesClient("localhost", 50051, client);
+    auto status = humanoid_robot::factory::CreateInterfacesClient("localhost", 50051, client);
 
     if (status)
     {

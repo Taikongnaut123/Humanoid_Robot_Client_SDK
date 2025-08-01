@@ -15,9 +15,11 @@
 #include <future>
 
 #include <grpcpp/grpcpp.h>
+#include "robot/common/status.h"
 #include "interfaces/interfaces_grpc.grpc.pb.h"
 #include "interfaces/interfaces_request_response.pb.h"
-#include "robot/common/status.h"
+
+using humanoid_robot::common::Status;
 
 namespace humanoid_robot
 {
@@ -25,10 +27,10 @@ namespace humanoid_robot
     {
         // Forward declarations for async operation results
         template <typename T>
-        using AsyncResult = std::future<humanoid_robot::common::Status>;
+        using AsyncResult = std::future<Status>;
 
         template <typename T>
-        using AsyncCallback = std::function<void(const humanoid_robot::common::Status &, const T &)>;
+        using AsyncCallback = std::function<void(const Status &, const T &)>;
 
         /**
          * InterfacesClient - gRPC client for InterfaceService
@@ -44,8 +46,8 @@ namespace humanoid_robot
             ~InterfacesClient();
 
             // Connection management
-            humanoid_robot::common::Status Connect(const std::string &server_address, int port);
-            humanoid_robot::common::Status Connect(const std::string &target);
+            Status Connect(const std::string &server_address, int port);
+            Status Connect(const std::string &target);
             void Disconnect();
             bool IsConnected() const;
 
@@ -60,7 +62,7 @@ namespace humanoid_robot
              * @param timeout_ms Timeout in milliseconds (default: 5000)
              * @return Status of the operation
              */
-            humanoid_robot::common::Status Create(
+            Status Create(
                 const interfaces::CreateRequest &request,
                 interfaces::CreateResponse &response,
                 int64_t timeout_ms = 5000);
@@ -72,7 +74,7 @@ namespace humanoid_robot
              * @param timeout_ms Timeout in milliseconds (default: 5000)
              * @return Status of the operation
              */
-            humanoid_robot::common::Status Send(
+            Status Send(
                 const interfaces::SendRequest &request,
                 interfaces::SendResponse &response,
                 int64_t timeout_ms = 5000);
@@ -84,7 +86,7 @@ namespace humanoid_robot
              * @param timeout_ms Timeout in milliseconds (default: 5000)
              * @return Status of the operation
              */
-            humanoid_robot::common::Status Delete(
+            Status Delete(
                 const interfaces::DeleteRequest &request,
                 interfaces::DeleteResponse &response,
                 int64_t timeout_ms = 5000);
@@ -96,7 +98,7 @@ namespace humanoid_robot
              * @param timeout_ms Timeout in milliseconds (default: 5000)
              * @return Status of the operation
              */
-            humanoid_robot::common::Status Query(
+            Status Query(
                 const interfaces::QueryRequest &request,
                 interfaces::QueryResponse &response,
                 int64_t timeout_ms = 5000);
@@ -108,7 +110,7 @@ namespace humanoid_robot
              * @param timeout_ms Timeout in milliseconds (default: 10000)
              * @return Status of the operation
              */
-            humanoid_robot::common::Status BatchCreate(
+            Status BatchCreate(
                 const interfaces::BatchCreateRequest &request,
                 interfaces::BatchCreateResponse &response,
                 int64_t timeout_ms = 10000);
@@ -120,7 +122,7 @@ namespace humanoid_robot
              * @param timeout_ms Timeout in milliseconds (default: 3000)
              * @return Status of the operation
              */
-            humanoid_robot::common::Status HealthCheck(
+            Status HealthCheck(
                 const interfaces::HealthCheckRequest &request,
                 interfaces::HealthCheckResponse &response,
                 int64_t timeout_ms = 3000);
@@ -132,7 +134,7 @@ namespace humanoid_robot
              * @param timeout_ms Timeout in milliseconds (default: 5000)
              * @return Status of the operation
              */
-            humanoid_robot::common::Status Unsubscribe(
+            Status Unsubscribe(
                 const interfaces::UnsubscribeRequest &request,
                 interfaces::UnsubscribeResponse &response,
                 int64_t timeout_ms = 5000);
@@ -212,7 +214,7 @@ namespace humanoid_robot
              * @param timeout_ms Timeout for the subscription (0 = no timeout)
              * @return Status of the operation (returns when stream ends or errors)
              */
-            humanoid_robot::common::Status Subscribe(
+            Status Subscribe(
                 const interfaces::SubscribeRequest &request,
                 std::function<void(const interfaces::SubscribeResponse &)> callback,
                 int64_t timeout_ms = 0);
@@ -225,10 +227,10 @@ namespace humanoid_robot
              * @param timeout_ms Timeout for the subscription (0 = no timeout)
              * @return Status of the operation setup (not the stream itself)
              */
-            humanoid_robot::common::Status SubscribeWithErrorHandling(
+            Status SubscribeWithErrorHandling(
                 const interfaces::SubscribeRequest &request,
                 std::function<void(const interfaces::SubscribeResponse &)> response_callback,
-                std::function<void(const humanoid_robot::common::Status &)> error_callback,
+                std::function<void(const Status &)> error_callback,
                 int64_t timeout_ms = 0);
 
             // =================================================================
@@ -250,7 +252,7 @@ namespace humanoid_robot
             /**
              * Get server information via health check
              */
-            humanoid_robot::common::Status GetServerInfo(std::string &server_info);
+            Status GetServerInfo(std::string &server_info);
 
         private:
             // Private implementation details
@@ -262,7 +264,7 @@ namespace humanoid_robot
             InterfacesClient &operator=(const InterfacesClient &) = delete;
 
             // Helper methods
-            humanoid_robot::common::Status CreateGrpcStatus(const grpc::Status &grpc_status);
+            Status ConvertGrpcStatus(const grpc::Status &grpc_status);
             std::chrono::system_clock::time_point GetDeadline(int64_t timeout_ms);
         };
 
@@ -277,10 +279,27 @@ namespace humanoid_robot
          * @param client Output client instance
          * @return Status of the connection
          */
-        humanoid_robot::common::Status CreateInterfacesClient(
+        Status CreateInterfacesClientLegacy(
             const std::string &server_address,
             int port,
             std::unique_ptr<InterfacesClient> &client);
+
+    } // namespace robot
+
+    // Factory functions for creating clients
+    namespace factory
+    {
+        /**
+         * Create a quick interfaces client with server address and port
+         * @param server_address Server address (e.g., "localhost")
+         * @param port Server port (e.g., 50051)
+         * @param client Output client instance
+         * @return Status of the connection
+         */
+        Status CreateInterfacesClient(
+            const std::string &server_address,
+            int port,
+            std::unique_ptr<robot::InterfacesClient> &client);
 
         /**
          * Create a quick interfaces client with target string
@@ -288,11 +307,10 @@ namespace humanoid_robot
          * @param client Output client instance
          * @return Status of the connection
          */
-        humanoid_robot::common::Status CreateInterfacesClient(
+        Status CreateInterfacesClient(
             const std::string &target,
-            std::unique_ptr<InterfacesClient> &client);
-
-    } // namespace robot
+            std::unique_ptr<robot::InterfacesClient> &client);
+    } // namespace factory
 } // namespace humanoid_robot
 
 #endif // HUMANOID_ROBOT_INTERFACES_CLIENT_H

@@ -132,7 +132,7 @@ namespace humanoid_robot
             context.set_deadline(GetDeadline(timeout_ms));
 
             grpc::Status status = pImpl_->stub_->Create(&context, request, &response);
-            return CreateGrpcStatus(status);
+            return ConvertGrpcStatus(status);
         }
 
         humanoid_robot::common::Status InterfacesClient::Send(
@@ -151,7 +151,7 @@ namespace humanoid_robot
             context.set_deadline(GetDeadline(timeout_ms));
 
             grpc::Status status = pImpl_->stub_->Send(&context, request, &response);
-            return CreateGrpcStatus(status);
+            return ConvertGrpcStatus(status);
         }
 
         humanoid_robot::common::Status InterfacesClient::Delete(
@@ -170,7 +170,7 @@ namespace humanoid_robot
             context.set_deadline(GetDeadline(timeout_ms));
 
             grpc::Status status = pImpl_->stub_->Delete(&context, request, &response);
-            return CreateGrpcStatus(status);
+            return ConvertGrpcStatus(status);
         }
 
         humanoid_robot::common::Status InterfacesClient::Query(
@@ -189,7 +189,7 @@ namespace humanoid_robot
             context.set_deadline(GetDeadline(timeout_ms));
 
             grpc::Status status = pImpl_->stub_->Query(&context, request, &response);
-            return CreateGrpcStatus(status);
+            return ConvertGrpcStatus(status);
         }
 
         humanoid_robot::common::Status InterfacesClient::BatchCreate(
@@ -208,7 +208,7 @@ namespace humanoid_robot
             context.set_deadline(GetDeadline(timeout_ms));
 
             grpc::Status status = pImpl_->stub_->BatchCreate(&context, request, &response);
-            return CreateGrpcStatus(status);
+            return ConvertGrpcStatus(status);
         }
 
         humanoid_robot::common::Status InterfacesClient::HealthCheck(
@@ -227,7 +227,7 @@ namespace humanoid_robot
             context.set_deadline(GetDeadline(timeout_ms));
 
             grpc::Status status = pImpl_->stub_->HealthCheck(&context, request, &response);
-            return CreateGrpcStatus(status);
+            return ConvertGrpcStatus(status);
         }
 
         humanoid_robot::common::Status InterfacesClient::Unsubscribe(
@@ -246,7 +246,7 @@ namespace humanoid_robot
             context.set_deadline(GetDeadline(timeout_ms));
 
             grpc::Status status = pImpl_->stub_->Unsubscribe(&context, request, &response);
-            return CreateGrpcStatus(status);
+            return ConvertGrpcStatus(status);
         }
 
         // =================================================================
@@ -388,7 +388,7 @@ namespace humanoid_robot
             }
 
             grpc::Status status = reader->Finish();
-            return CreateGrpcStatus(status);
+            return ConvertGrpcStatus(status);
         }
 
         humanoid_robot::common::Status InterfacesClient::SubscribeWithErrorHandling(
@@ -479,7 +479,7 @@ namespace humanoid_robot
         // Private Helper Methods
         // =================================================================
 
-        humanoid_robot::common::Status InterfacesClient::CreateGrpcStatus(const grpc::Status &grpc_status)
+        humanoid_robot::common::Status InterfacesClient::ConvertGrpcStatus(const grpc::Status &grpc_status)
         {
             if (grpc_status.ok())
             {
@@ -527,22 +527,27 @@ namespace humanoid_robot
         // Convenience Functions
         // =================================================================
 
+    } // namespace robot
+
+    // Factory functions implementation
+    namespace factory
+    {
         humanoid_robot::common::Status CreateInterfacesClient(
             const std::string &server_address,
             int port,
-            std::unique_ptr<InterfacesClient> &client)
+            std::unique_ptr<robot::InterfacesClient> &client)
         {
-            client = std::make_unique<InterfacesClient>();
+            client = std::make_unique<robot::InterfacesClient>();
             return client->Connect(server_address, port);
         }
 
         humanoid_robot::common::Status CreateInterfacesClient(
             const std::string &target,
-            std::unique_ptr<InterfacesClient> &client)
+            std::unique_ptr<robot::InterfacesClient> &client)
         {
-            client = std::make_unique<InterfacesClient>();
+            client = std::make_unique<robot::InterfacesClient>();
             return client->Connect(target);
         }
 
-    } // namespace robot
+    } // namespace factory
 } // namespace humanoid_robot

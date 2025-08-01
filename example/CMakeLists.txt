@@ -53,14 +53,14 @@ foreach(EXAMPLE_SOURCE ${EXAMPLE_SOURCES})
     target_link_libraries(${EXAMPLE_NAME}
         robot_client
         robot_common
-        libinterfaces
-        libcommon
+        libinterfacesPB
+        libcommonPB
         protobuf::libprotobuf
         gRPC::grpc++
     )
     
     # 添加依赖关系
-    add_dependencies(${EXAMPLE_NAME} robot_client robot_common libinterfaces libcommon)
+    add_dependencies(${EXAMPLE_NAME} robot_client robot_common libinterfacesPB libcommonPB)
     
     message(STATUS "Created example: ${EXAMPLE_NAME}")
 endforeach()

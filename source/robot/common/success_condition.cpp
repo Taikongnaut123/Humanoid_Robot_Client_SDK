@@ -1,4 +1,4 @@
-#include "success_condition.h"
+#include "robot/common/success_condition.h"
 
 namespace
 { // anonymous namespace

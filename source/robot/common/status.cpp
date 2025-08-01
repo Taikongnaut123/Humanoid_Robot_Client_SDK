@@ -2,10 +2,10 @@
  * Copyright (c) 2025 Humanoid Robot, lnc.  All rights reserved.
  */
 
-#include "status.h"
-#include "success_condition.h"
+#include "robot/common/status.h"
+#include "robot/common/success_condition.h"
 #include <iostream>
-using namespace humanoid_robot::common;
+using namespace humanoid_robot::clientSDK::common;
 
 Status::Status(const std::error_code &code, std::string message)
     : m_code(code), m_message(std::move(message)) {}

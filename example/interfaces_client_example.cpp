@@ -12,8 +12,8 @@
 #include "robot/client/interfaces_client.h"
 #include "interfaces/interfaces_request_response.pb.h"
 
-using namespace humanoid_robot::robot;
-using namespace humanoid_robot::common;
+using namespace humanoid_robot::clientSDK::robot;
+using namespace humanoid_robot::clientSDK::common;
 
 void PrintStatus(const Status &status, const std::string &operation)
 {
@@ -205,7 +205,7 @@ void ExampleConnectionManagement()
 
     // Create client using convenience function
     std::unique_ptr<InterfacesClient> client;
-    auto status = humanoid_robot::factory::CreateInterfacesClient("localhost", 50051, client);
+    auto status = humanoid_robot::clientSDK::factory::CreateInterfacesClient("localhost", 50051, client);
 
     if (status)
     {

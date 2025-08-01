@@ -6,12 +6,15 @@
 
 namespace humanoid_robot
 {
-    namespace common
+    namespace clientSDK
     {
-        using error_t = int;
-        using IP = std::string;
-        using PORT = int;
-    } // namespace common
+        namespace common
+        {
+            using error_t = int;
+            using IP = std::string;
+            using PORT = int;
+        } // namespace common
+    } // namespace clientSDK
 }
 
 #define HUMANOID_ROBOT_COMMON_MARCO_H

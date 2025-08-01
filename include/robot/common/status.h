@@ -9,48 +9,50 @@
 
 namespace humanoid_robot
 {
-    namespace common
+    namespace clientSDK
     {
-        class [[nodiscard]] Status
+        namespace common
         {
-        public:
-            Status() = default;
-
-            ~Status() = default;
-
-            Status(const std::error_code &code, std::string message = "");
-
-            operator bool() const;
-
-            std::error_code code() const { return m_code; }
-
-            // Check if this matches a certain error enum.
-            template <typename ENUM>
-            bool Is() const
+            class [[nodiscard]] Status
             {
-                static_assert(std::is_error_code_enum<ENUM>::value,
-                              "Must check against an error code enum");
-                return std::error_code(ENUM{}).category() == m_code.category();
-            }
+            public:
+                Status() = default;
 
-            const std::string &message() const { return m_message; }
+                ~Status() = default;
 
-            // Extend a ::bosdyn::common::Status with a new message.
-            ::humanoid_robot::common::Status Chain(std::string message) const;
+                Status(const std::error_code &code, std::string message = "");
 
-            // Transform a ::bosdyn::common::Status into a new code.
-            ::humanoid_robot::common::Status Chain(std::error_code code, std::string message) const;
+                operator bool() const;
 
-            std::string DebugString() const;
+                std::error_code code() const { return m_code; }
 
-            // Used to explicitly ignore any error present to silence nodiscard warnings.
-            inline void IgnoreError() const {}
+                // Check if this matches a certain error enum.
+                template <typename ENUM>
+                bool Is() const
+                {
+                    static_assert(std::is_error_code_enum<ENUM>::value,
+                                  "Must check against an error code enum");
+                    return std::error_code(ENUM{}).category() == m_code.category();
+                }
 
-        private:
-            std::error_code m_code;
-            std::string m_message;
-        };
-    } // namespace common
+                const std::string &message() const { return m_message; }
 
+                // Extend a ::bosdyn::common::Status with a new message.
+                ::humanoid_robot::clientSDK::common::Status Chain(std::string message) const;
+
+                // Transform a ::bosdyn::common::Status into a new code.
+                ::humanoid_robot::clientSDK::common::Status Chain(std::error_code code, std::string message) const;
+
+                std::string DebugString() const;
+
+                // Used to explicitly ignore any error present to silence nodiscard warnings.
+                inline void IgnoreError() const {}
+
+            private:
+                std::error_code m_code;
+                std::string m_message;
+            };
+        } // namespace common
+    } // namespace clientSDK
 } // namespace humanoid_robot
 #endif // HUMANOID_ROBOT_COMMON_STATUS_H

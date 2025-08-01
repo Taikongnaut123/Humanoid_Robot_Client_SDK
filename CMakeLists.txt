@@ -8,7 +8,7 @@ set(CLIENT_SDK_ROOT_INCLUDE_DIR "${CLIENT_SDK_ROOT_PATH}/include" CACHE PATH "Pa
 set(CLIENT_SDK_ROOT_LIB_DIR "${CLIENT_SDK_ROOT_PATH}/lib/${PLATFORM_ARCH}/${BUILD_TYPE_DIR}" CACHE PATH "Path to the Client SDK library files")
 
 set(CLIENT_SDK_CLIENT_INCLUDE_DIR "${CLIENT_SDK_ROOT_INCLUDE_DIR}/robot/client" CACHE PATH "Path to the Client SDK client include files")
-set(CLIENT_SDK_COMMON_INCLUDE_DIR "${CLIENT_SDK_ROOT_INCLUDE_DIR}/robot/common" CACHE PATH "Path to the Client SDK common include files")
+set(CLIENT_SDK_COMMON_INCLUDE_DIR "${CLIENT_SDK_ROOT_INCLUDE_DIR}" CACHE PATH "Path to the Client SDK common include files")
 set(CLIENT_SDK_V1_INCLUDE_DIR "${CLIENT_SDK_ROOT_INCLUDE_DIR}/robot/v1" CACHE PATH "Path to the Client SDK V1 include files")
 
 set(CLIENT_SDK_CLIENT_LIB_DIR "${CLIENT_SDK_ROOT_LIB_DIR}/robot/client" CACHE PATH "Path to the Client SDK client library files")

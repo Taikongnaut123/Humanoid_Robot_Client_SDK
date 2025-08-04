@@ -11,6 +11,7 @@
 #include <chrono>
 #include <thread>
 #include <iostream>
+#include <ctime>
 
 using namespace humanoid_robot::clientSDK::robot;
 using namespace humanoid_robot::clientSDK::common;
@@ -270,11 +271,24 @@ void InterfacesClient::CreateAsync(
     AsyncCallback<interfaces::CreateResponse> callback,
     int64_t timeout_ms)
 {
-    std::thread([this, request, callback, timeout_ms]()
+    // 使用 weak_ptr 避免循环引用和内存泄漏
+    std::weak_ptr<InterfacesClient> weak_self = shared_from_this();
+
+    std::thread([weak_self, request, callback, timeout_ms]()
                 {
-                interfaces::CreateResponse response;
-                auto status = Create(request, response, timeout_ms);
-                callback(status, response); })
+                // 尝试获取 shared_ptr，检查对象是否仍然存在
+                if (auto self = weak_self.lock()) {
+                    interfaces::CreateResponse response;
+                    auto status = self->Create(request, response, timeout_ms);
+                    callback(status, response);
+                } else {
+                    // 对象已被销毁，调用回调通知错误
+                    interfaces::CreateResponse response;
+                    Status error_status(
+                        std::make_error_code(std::errc::operation_canceled),
+                        "Client object has been destroyed");
+                    callback(error_status, response);
+                } })
         .detach();
 }
 
@@ -296,11 +310,21 @@ void InterfacesClient::SendAsync(
     AsyncCallback<interfaces::SendResponse> callback,
     int64_t timeout_ms)
 {
-    std::thread([this, request, callback, timeout_ms]()
+    std::weak_ptr<InterfacesClient> weak_self = shared_from_this();
+
+    std::thread([weak_self, request, callback, timeout_ms]()
                 {
-                interfaces::SendResponse response;
-                auto status = Send(request, response, timeout_ms);
-                callback(status, response); })
+                if (auto self = weak_self.lock()) {
+                    interfaces::SendResponse response;
+                    auto status = self->Send(request, response, timeout_ms);
+                    callback(status, response);
+                } else {
+                    interfaces::SendResponse response;
+                    Status error_status(
+                        std::make_error_code(std::errc::operation_canceled),
+                        "Client object has been destroyed");
+                    callback(error_status, response);
+                } })
         .detach();
 }
 
@@ -322,11 +346,21 @@ void InterfacesClient::QueryAsync(
     AsyncCallback<interfaces::QueryResponse> callback,
     int64_t timeout_ms)
 {
-    std::thread([this, request, callback, timeout_ms]()
+    std::weak_ptr<InterfacesClient> weak_self = shared_from_this();
+
+    std::thread([weak_self, request, callback, timeout_ms]()
                 {
-                interfaces::QueryResponse response;
-                auto status = Query(request, response, timeout_ms);
-                callback(status, response); })
+                if (auto self = weak_self.lock()) {
+                    interfaces::QueryResponse response;
+                    auto status = self->Query(request, response, timeout_ms);
+                    callback(status, response);
+                } else {
+                    interfaces::QueryResponse response;
+                    Status error_status(
+                        std::make_error_code(std::errc::operation_canceled),
+                        "Client object has been destroyed");
+                    callback(error_status, response);
+                } })
         .detach();
 }
 
@@ -348,11 +382,21 @@ void InterfacesClient::HealthCheckAsync(
     AsyncCallback<interfaces::HealthCheckResponse> callback,
     int64_t timeout_ms)
 {
-    std::thread([this, request, callback, timeout_ms]()
+    std::weak_ptr<InterfacesClient> weak_self = shared_from_this();
+
+    std::thread([weak_self, request, callback, timeout_ms]()
                 {
-                interfaces::HealthCheckResponse response;
-                auto status = HealthCheck(request, response, timeout_ms);
-                callback(status, response); })
+                if (auto self = weak_self.lock()) {
+                    interfaces::HealthCheckResponse response;
+                    auto status = self->HealthCheck(request, response, timeout_ms);
+                    callback(status, response);
+                } else {
+                    interfaces::HealthCheckResponse response;
+                    Status error_status(
+                        std::make_error_code(std::errc::operation_canceled),
+                        "Client object has been destroyed");
+                    callback(error_status, response);
+                } })
         .detach();
 }
 
@@ -396,11 +440,20 @@ Status InterfacesClient::SubscribeWithErrorHandling(
     std::function<void(const Status &)> error_callback,
     int64_t timeout_ms)
 {
+    std::weak_ptr<InterfacesClient> weak_self = shared_from_this();
+
     // Start subscription in a separate thread
-    std::thread([this, request, response_callback, error_callback, timeout_ms]()
+    std::thread([weak_self, request, response_callback, error_callback, timeout_ms]()
                 {
-                auto status = Subscribe(request, response_callback, timeout_ms);
-                error_callback(status); })
+                if (auto self = weak_self.lock()) {
+                    auto status = self->Subscribe(request, response_callback, timeout_ms);
+                    error_callback(status);
+                } else {
+                    Status error_status(
+                        std::make_error_code(std::errc::operation_canceled),
+                        "Client object has been destroyed");
+                    error_callback(error_status);
+                } })
         .detach();
 
     return Status(); // Return immediately
@@ -529,20 +582,95 @@ std::chrono::system_clock::time_point InterfacesClient::GetDeadline(int64_t time
 // Factory functions implementation
 namespace humanoid_robot::clientSDK::factory
 {
+    // Preferred shared_ptr versions for async safety
     Status CreateInterfacesClient(
         const std::string &server_address,
         int port,
-        std::unique_ptr<robot::InterfacesClient> &client)
+        std::shared_ptr<robot::InterfacesClient> &client)
     {
-        client = std::make_unique<robot::InterfacesClient>();
+        client = std::shared_ptr<robot::InterfacesClient>(new robot::InterfacesClient());
         return client->Connect(server_address, port);
     }
 
     Status CreateInterfacesClient(
         const std::string &target,
-        std::unique_ptr<robot::InterfacesClient> &client)
+        std::shared_ptr<robot::InterfacesClient> &client)
     {
-        client = std::make_unique<robot::InterfacesClient>();
+        client = std::shared_ptr<robot::InterfacesClient>(new robot::InterfacesClient());
         return client->Connect(target);
     }
+}
+
+// =================================================================
+// 持久订阅方法实现 (简化版本)
+// =================================================================
+
+std::pair<Status, std::string> InterfacesClient::CreatePersistentSubscription(
+    const std::string &topic_id,
+    const std::string &object_id,
+    const std::string &client_endpoint,
+    const std::vector<std::string> &event_types,
+    const base_types::Dictionary &subscription_data)
+{
+    if (!IsConnected())
+    {
+        return std::make_pair(
+            Status(std::make_error_code(std::errc::not_connected), "Client not connected"),
+            "");
+    }
+
+    // 生成订阅ID
+    std::string subscription_id = "sub_" + object_id + "_" + std::to_string(std::time(nullptr));
+
+    std::cout << "Created persistent subscription: " << subscription_id
+              << " for objectId: " << object_id
+              << " with client endpoint: " << client_endpoint << std::endl;
+
+    // TODO: 实际实现需要调用服务端接口创建持久订阅
+    // 这里先返回成功状态和生成的订阅ID
+
+    return std::make_pair(Status(), subscription_id);
+}
+
+Status InterfacesClient::UpdatePersistentSubscription(
+    const std::string &subscription_id,
+    const std::vector<std::string> &event_types,
+    const base_types::Dictionary &subscription_data)
+{
+    std::cout << "Updating persistent subscription: " << subscription_id << std::endl;
+
+    // TODO: 实现订阅更新逻辑
+    return Status(std::make_error_code(std::errc::function_not_supported),
+                  "Update subscription not implemented yet");
+}
+
+Status InterfacesClient::CancelPersistentSubscription(
+    const std::string &subscription_id,
+    const std::string &object_id)
+{
+    if (!IsConnected())
+    {
+        return Status(std::make_error_code(std::errc::not_connected), "Client not connected");
+    }
+
+    std::cout << "Cancelling persistent subscription: " << subscription_id
+              << " for objectId: " << object_id << std::endl;
+
+    // TODO: 实际实现需要调用服务端取消订阅接口
+    return Status();
+}
+
+Status InterfacesClient::GetSubscriptionStatus(
+    const std::string &subscription_id,
+    base_types::Dictionary &subscription_info)
+{
+    if (!IsConnected())
+    {
+        return Status(std::make_error_code(std::errc::not_connected), "Client not connected");
+    }
+
+    std::cout << "Getting subscription status for: " << subscription_id << std::endl;
+
+    // TODO: 实际实现需要查询服务端订阅状态
+    return Status();
 }

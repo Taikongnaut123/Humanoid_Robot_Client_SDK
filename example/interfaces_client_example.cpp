@@ -203,8 +203,8 @@ void ExampleConnectionManagement()
 {
     std::cout << "\n=== Connection Management Example ===" << std::endl;
 
-    // Create client using convenience function
-    std::unique_ptr<InterfacesClient> client;
+    // Create client using convenience function (now using shared_ptr for async safety)
+    std::shared_ptr<InterfacesClient> client;
     auto status = humanoid_robot::clientSDK::factory::CreateInterfacesClient("localhost", 50051, client);
 
     if (status)

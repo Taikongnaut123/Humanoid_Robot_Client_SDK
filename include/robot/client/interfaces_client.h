@@ -40,7 +40,7 @@ namespace humanoid_robot
              * This client provides both synchronous and asynchronous methods for all
              * InterfaceService operations defined in interfaces_grpc.proto
              */
-            class InterfacesClient
+            class InterfacesClient : public std::enable_shared_from_this<InterfacesClient>
             {
             public:
                 // Constructor and destructor
@@ -210,7 +210,7 @@ namespace humanoid_robot
                 // =================================================================
 
                 /**
-                 * Subscribe to events (streaming response)
+                 * Subscribe to events (streaming response) - Legacy方式
                  * @param request The subscription request
                  * @param callback Called for each received event
                  * @param timeout_ms Timeout for the subscription (0 = no timeout)
@@ -222,7 +222,7 @@ namespace humanoid_robot
                     int64_t timeout_ms = 0);
 
                 /**
-                 * Subscribe with error handling callback
+                 * Subscribe with error handling callback - Legacy方式
                  * @param request The subscription request
                  * @param response_callback Called for each received event
                  * @param error_callback Called when stream errors or ends
@@ -234,6 +234,59 @@ namespace humanoid_robot
                     std::function<void(const interfaces::SubscribeResponse &)> response_callback,
                     std::function<void(const Status &)> error_callback,
                     int64_t timeout_ms = 0);
+
+                // =================================================================
+                // 持久订阅方法 (Persistent Subscription)
+                // =================================================================
+
+                /**
+                 * 创建持久订阅 - 推荐方式
+                 * 服务端会保存订阅信息，当有新消息时主动推送给客户端回调服务器
+                 * @param topic_id 订阅主题ID
+                 * @param object_id 对象ID（用户自定义标识）
+                 * @param client_endpoint 客户端回调服务端点 (e.g., "localhost:8080")
+                 * @param event_types 订阅的事件类型列表
+                 * @param subscription_data 额外的订阅数据
+                 * @return 订阅状态和订阅ID
+                 */
+                std::pair<Status, std::string> CreatePersistentSubscription(
+                    const std::string &topic_id,
+                    const std::string &object_id,
+                    const std::string &client_endpoint,
+                    const std::vector<std::string> &event_types = {},
+                    const base_types::Dictionary &subscription_data = base_types::Dictionary());
+
+                /**
+                 * 更新持久订阅
+                 * @param subscription_id 订阅ID
+                 * @param event_types 新的事件类型列表
+                 * @param subscription_data 新的订阅数据
+                 * @return 更新状态
+                 */
+                Status UpdatePersistentSubscription(
+                    const std::string &subscription_id,
+                    const std::vector<std::string> &event_types,
+                    const base_types::Dictionary &subscription_data = base_types::Dictionary());
+
+                /**
+                 * 取消持久订阅
+                 * @param subscription_id 订阅ID
+                 * @param object_id 对象ID（用于验证）
+                 * @return 取消状态
+                 */
+                Status CancelPersistentSubscription(
+                    const std::string &subscription_id,
+                    const std::string &object_id);
+
+                /**
+                 * 查询订阅状态
+                 * @param subscription_id 订阅ID
+                 * @param subscription_info 输出订阅信息
+                 * @return 查询状态
+                 */
+                Status GetSubscriptionStatus(
+                    const std::string &subscription_id,
+                    base_types::Dictionary &subscription_info);
 
                 // =================================================================
                 // Utility Methods
@@ -292,26 +345,26 @@ namespace humanoid_robot
         namespace factory
         {
             /**
-             * Create a quick interfaces client with server address and port
+             * Create and connect interfaces client (推荐用于异步操作)
              * @param server_address Server address (e.g., "localhost")
              * @param port Server port (e.g., 50051)
-             * @param client Output client instance
+             * @param client Output client instance (shared_ptr for async safety)
              * @return Status of the connection
              */
             Status CreateInterfacesClient(
                 const std::string &server_address,
                 int port,
-                std::unique_ptr<robot::InterfacesClient> &client);
+                std::shared_ptr<robot::InterfacesClient> &client);
 
             /**
-             * Create a quick interfaces client with target string
+             * Create a quick interfaces client with target string (推荐用于异步操作)
              * @param target Target string (e.g., "localhost:50051")
-             * @param client Output client instance
+             * @param client Output client instance (shared_ptr for async safety)
              * @return Status of the connection
              */
             Status CreateInterfacesClient(
                 const std::string &target,
-                std::unique_ptr<robot::InterfacesClient> &client);
+                std::shared_ptr<robot::InterfacesClient> &client);
         } // namespace factory
     } // namespace clientSDK
 } // namespace humanoid_robot

@@ -1,0 +1,159 @@
+/**
+ * Copyright (c) 2025 Humanoid Robot, Inc. All rights reserved.
+ *
+ * Client Callback Server for receiving subscription notifications from server
+ */
+
+#ifndef HUMANOID_ROBOT_CLIENT_CALLBACK_SERVER_H
+#define HUMANOID_ROBOT_CLIENT_CALLBACK_SERVER_H
+
+#include <memory>
+#include <string>
+#include <functional>
+#include <thread>
+#include <atomic>
+
+#include <grpcpp/grpcpp.h>
+#include "robot/common/status.h"
+#include "interfaces/interfaces_callback.grpc.pb.h"
+
+using humanoid_robot::clientSDK::common::Status;
+
+namespace humanoid_robot
+{
+    namespace clientSDK
+    {
+        namespace robot
+        {
+            // 回调函数类型定义
+            using SubscriptionMessageCallback = std::function<void(const interfaces::SubscriptionNotification &)>;
+            using SubscriptionStatusCallback = std::function<void(const interfaces::SubscriptionStatusChange &)>;
+            using SubscriptionErrorCallback = std::function<void(const interfaces::SubscriptionError &)>;
+
+            /**
+             * ClientCallbackServer - 客户端回调服务器
+             *
+             * 用于接收来自 Interfaces-Server 的主动推送消息
+             * 当服务端有订阅消息时，会调用此服务器的接口推送给客户端
+             */
+            class ClientCallbackServer
+            {
+            public:
+                ClientCallbackServer();
+                ~ClientCallbackServer();
+
+                // =================================================================
+                // 服务器生命周期管理
+                // =================================================================
+
+                /**
+                 * 启动回调服务器
+                 * @param listen_address 监听地址 (e.g., "0.0.0.0", "localhost")
+                 * @param port 监听端口
+                 * @return 启动状态
+                 */
+                Status Start(const std::string &listen_address, int port);
+
+                /**
+                 * 启动回调服务器（自动分配端口）
+                 * @param listen_address 监听地址
+                 * @param assigned_port 输出分配的端口号
+                 * @return 启动状态
+                 */
+                Status StartWithAutoPort(const std::string &listen_address, int &assigned_port);
+
+                /**
+                 * 停止回调服务器
+                 */
+                void Stop();
+
+                /**
+                 * 检查服务器是否正在运行
+                 */
+                bool IsRunning() const;
+
+                /**
+                 * 获取服务器监听地址
+                 */
+                std::string GetListenAddress() const;
+
+                /**
+                 * 获取服务器监听端口
+                 */
+                int GetListenPort() const;
+
+                // =================================================================
+                // 回调函数注册
+                // =================================================================
+
+                /**
+                 * 注册订阅消息回调
+                 * @param callback 消息回调函数
+                 */
+                void SetSubscriptionMessageCallback(SubscriptionMessageCallback callback);
+
+                /**
+                 * 注册订阅状态变化回调
+                 * @param callback 状态变化回调函数
+                 */
+                void SetSubscriptionStatusCallback(SubscriptionStatusCallback callback);
+
+                /**
+                 * 注册订阅错误回调
+                 * @param callback 错误回调函数
+                 */
+                void SetSubscriptionErrorCallback(SubscriptionErrorCallback callback);
+
+                // =================================================================
+                // 便捷方法
+                // =================================================================
+
+                /**
+                 * 一次性设置所有回调
+                 */
+                void SetAllCallbacks(
+                    SubscriptionMessageCallback message_callback,
+                    SubscriptionStatusCallback status_callback,
+                    SubscriptionErrorCallback error_callback);
+
+                /**
+                 * 获取客户端服务端点（用于订阅时告知服务端）
+                 * @return 格式为 "address:port" 的端点字符串
+                 */
+                std::string GetClientEndpoint() const;
+
+            private:
+                // Private implementation
+                class Impl;
+                std::unique_ptr<Impl> pImpl_;
+
+                // Disable copy and assignment
+                ClientCallbackServer(const ClientCallbackServer &) = delete;
+                ClientCallbackServer &operator=(const ClientCallbackServer &) = delete;
+            };
+
+            // =================================================================
+            // 便捷工厂函数
+            // =================================================================
+
+            /**
+             * 创建并启动客户端回调服务器
+             * @param listen_address 监听地址
+             * @param port 监听端口（0表示自动分配）
+             * @param message_callback 消息回调
+             * @param status_callback 状态回调（可选）
+             * @param error_callback 错误回调（可选）
+             * @return 服务器实例和状态
+             */
+            std::pair<std::unique_ptr<ClientCallbackServer>, Status> CreateCallbackServer(
+                const std::string &listen_address,
+                int port = 0,
+                SubscriptionMessageCallback message_callback = nullptr,
+                SubscriptionStatusCallback status_callback = nullptr,
+                SubscriptionErrorCallback error_callback = nullptr);
+
+        } // namespace robot
+    } // namespace clientSDK
+} // namespace humanoid_robot
+
+#endif // HUMANOID_ROBOT_CLIENT_CALLBACK_SERVER_H

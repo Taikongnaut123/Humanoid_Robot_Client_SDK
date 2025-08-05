@@ -192,44 +192,6 @@ Status InterfacesClient::Query(
     return ConvertGrpcStatus(status);
 }
 
-Status InterfacesClient::BatchCreate(
-    const interfaces::BatchCreateRequest &request,
-    interfaces::BatchCreateResponse &response,
-    int64_t timeout_ms)
-{
-    if (!IsConnected())
-    {
-        return Status(
-            std::make_error_code(std::errc::not_connected),
-            "Client not connected");
-    }
-
-    grpc::ClientContext context;
-    context.set_deadline(GetDeadline(timeout_ms));
-
-    grpc::Status status = pImpl_->stub_->BatchCreate(&context, request, &response);
-    return ConvertGrpcStatus(status);
-}
-
-Status InterfacesClient::HealthCheck(
-    const interfaces::HealthCheckRequest &request,
-    interfaces::HealthCheckResponse &response,
-    int64_t timeout_ms)
-{
-    if (!IsConnected())
-    {
-        return Status(
-            std::make_error_code(std::errc::not_connected),
-            "Client not connected");
-    }
-
-    grpc::ClientContext context;
-    context.set_deadline(GetDeadline(timeout_ms));
-
-    grpc::Status status = pImpl_->stub_->HealthCheck(&context, request, &response);
-    return ConvertGrpcStatus(status);
-}
-
 Status InterfacesClient::Unsubscribe(
     const interfaces::UnsubscribeRequest &request,
     interfaces::UnsubscribeResponse &response,
@@ -364,49 +326,13 @@ void InterfacesClient::QueryAsync(
         .detach();
 }
 
-AsyncResult<interfaces::HealthCheckResponse> InterfacesClient::HealthCheckAsync(
-    const interfaces::HealthCheckRequest &request,
-    int64_t timeout_ms)
-{
-    auto promise = std::make_shared<std::promise<Status>>();
-    auto future = promise->get_future();
-
-    HealthCheckAsync(request, [promise](const Status &status, const interfaces::HealthCheckResponse &response)
-                     { promise->set_value(status); }, timeout_ms);
-
-    return future;
-}
-
-void InterfacesClient::HealthCheckAsync(
-    const interfaces::HealthCheckRequest &request,
-    AsyncCallback<interfaces::HealthCheckResponse> callback,
-    int64_t timeout_ms)
-{
-    std::weak_ptr<InterfacesClient> weak_self = shared_from_this();
-
-    std::thread([weak_self, request, callback, timeout_ms]()
-                {
-                if (auto self = weak_self.lock()) {
-                    interfaces::HealthCheckResponse response;
-                    auto status = self->HealthCheck(request, response, timeout_ms);
-                    callback(status, response);
-                } else {
-                    interfaces::HealthCheckResponse response;
-                    Status error_status(
-                        std::make_error_code(std::errc::operation_canceled),
-                        "Client object has been destroyed");
-                    callback(error_status, response);
-                } })
-        .detach();
-}
-
 // =================================================================
 // Streaming Methods
 // =================================================================
 
 Status InterfacesClient::Subscribe(
     const interfaces::SubscribeRequest &request,
-    std::function<void(const interfaces::SubscribeResponse &)> callback,
+    interfaces::SubscribeResponse &response,
     int64_t timeout_ms)
 {
     if (!IsConnected())
@@ -422,41 +348,8 @@ Status InterfacesClient::Subscribe(
         context.set_deadline(GetDeadline(timeout_ms));
     }
 
-    auto reader = pImpl_->stub_->Subscribe(&context, request);
-
-    interfaces::SubscribeResponse response;
-    while (reader->Read(&response))
-    {
-        callback(response);
-    }
-
-    grpc::Status status = reader->Finish();
+    auto status = pImpl_->stub_->Subscribe(&context, request, &response);
     return ConvertGrpcStatus(status);
-}
-
-Status InterfacesClient::SubscribeWithErrorHandling(
-    const interfaces::SubscribeRequest &request,
-    std::function<void(const interfaces::SubscribeResponse &)> response_callback,
-    std::function<void(const Status &)> error_callback,
-    int64_t timeout_ms)
-{
-    std::weak_ptr<InterfacesClient> weak_self = shared_from_this();
-
-    // Start subscription in a separate thread
-    std::thread([weak_self, request, response_callback, error_callback, timeout_ms]()
-                {
-                if (auto self = weak_self.lock()) {
-                    auto status = self->Subscribe(request, response_callback, timeout_ms);
-                    error_callback(status);
-                } else {
-                    Status error_status(
-                        std::make_error_code(std::errc::operation_canceled),
-                        "Client object has been destroyed");
-                    error_callback(error_status);
-                } })
-        .detach();
-
-    return Status(); // Return immediately
 }
 
 // =================================================================
@@ -492,39 +385,6 @@ bool InterfacesClient::WaitForChannelReady(int64_t timeout_ms)
     }
 
     return state == GRPC_CHANNEL_READY;
-}
-
-Status InterfacesClient::GetServerInfo(std::string &server_info)
-{
-    interfaces::HealthCheckRequest request;
-    request.set_service("InterfaceService");
-
-    // Add server info request parameter
-    auto *params = request.mutable_checkparams();
-    auto *items = params->mutable_keyvaluelist();
-    (*items)["get_server_info"] = base_types::Variant();
-    (*items)["get_server_info"].set_type(base_types::Variant::KBoolValue);
-    (*items)["get_server_info"].set_boolvalue(true);
-
-    interfaces::HealthCheckResponse response;
-    auto status = HealthCheck(request, response, 3000);
-
-    if (status)
-    {
-        // Extract server info from response metrics
-        if (response.has_metrics())
-        {
-            auto &metrics = response.metrics();
-            auto &items = metrics.keyvaluelist();
-            auto it = items.find("server_info");
-            if (it != items.end() && it->second.has_stringvalue())
-            {
-                server_info = it->second.stringvalue();
-            }
-        }
-    }
-
-    return status;
 }
 
 // =================================================================
@@ -599,65 +459,6 @@ namespace humanoid_robot::clientSDK::factory
         client = std::shared_ptr<robot::InterfacesClient>(new robot::InterfacesClient());
         return client->Connect(target);
     }
-}
-
-// =================================================================
-// 持久订阅方法实现 (简化版本)
-// =================================================================
-
-std::pair<Status, std::string> InterfacesClient::CreatePersistentSubscription(
-    const std::string &topic_id,
-    const std::string &object_id,
-    const std::string &client_endpoint,
-    const std::vector<std::string> &event_types,
-    const base_types::Dictionary &subscription_data)
-{
-    if (!IsConnected())
-    {
-        return std::make_pair(
-            Status(std::make_error_code(std::errc::not_connected), "Client not connected"),
-            "");
-    }
-
-    // 生成订阅ID
-    std::string subscription_id = "sub_" + object_id + "_" + std::to_string(std::time(nullptr));
-
-    std::cout << "Created persistent subscription: " << subscription_id
-              << " for objectId: " << object_id
-              << " with client endpoint: " << client_endpoint << std::endl;
-
-    // TODO: 实际实现需要调用服务端接口创建持久订阅
-    // 这里先返回成功状态和生成的订阅ID
-
-    return std::make_pair(Status(), subscription_id);
-}
-
-Status InterfacesClient::UpdatePersistentSubscription(
-    const std::string &subscription_id,
-    const std::vector<std::string> &event_types,
-    const base_types::Dictionary &subscription_data)
-{
-    std::cout << "Updating persistent subscription: " << subscription_id << std::endl;
-
-    // TODO: 实现订阅更新逻辑
-    return Status(std::make_error_code(std::errc::function_not_supported),
-                  "Update subscription not implemented yet");
-}
-
-Status InterfacesClient::CancelPersistentSubscription(
-    const std::string &subscription_id,
-    const std::string &object_id)
-{
-    if (!IsConnected())
-    {
-        return Status(std::make_error_code(std::errc::not_connected), "Client not connected");
-    }
-
-    std::cout << "Cancelling persistent subscription: " << subscription_id
-              << " for objectId: " << object_id << std::endl;
-
-    // TODO: 实际实现需要调用服务端取消订阅接口
-    return Status();
 }
 
 Status InterfacesClient::GetSubscriptionStatus(

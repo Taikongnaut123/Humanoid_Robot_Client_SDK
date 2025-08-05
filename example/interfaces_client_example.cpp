@@ -32,20 +32,6 @@ void ExampleSyncOperations(InterfacesClient &client)
 {
     std::cout << "\n=== Synchronous Operations Example ===" << std::endl;
 
-    // 1. Health Check
-    interfaces::HealthCheckRequest health_req;
-    health_req.set_service("InterfaceService");
-
-    interfaces::HealthCheckResponse health_resp;
-    auto status = client.HealthCheck(health_req, health_resp);
-    PrintStatus(status, "Health Check");
-
-    if (status)
-    {
-        std::cout << "    Server status: " << static_cast<int>(health_resp.status()) << std::endl;
-        std::cout << "    Message: " << health_resp.message() << std::endl;
-    }
-
     // 2. Create Resource
     interfaces::CreateRequest create_req;
 
@@ -71,7 +57,7 @@ void ExampleSyncOperations(InterfacesClient &client)
     params->set_correlationid("example-001");
 
     interfaces::CreateResponse create_resp;
-    status = client.Create(create_req, create_resp);
+    auto status = client.Create(create_req, create_resp);
     PrintStatus(status, "Create Resource");
 
     if (status)
@@ -125,19 +111,6 @@ void ExampleAsyncOperations(InterfacesClient &client)
 {
     std::cout << "\n=== Asynchronous Operations Example ===" << std::endl;
 
-    // Async Health Check with callback
-    interfaces::HealthCheckRequest health_req;
-    health_req.set_service("InterfaceService");
-
-    std::cout << "Starting async health check..." << std::endl;
-    client.HealthCheckAsync(health_req, [](const Status &status, const interfaces::HealthCheckResponse &response)
-                            {
-            if (status) {
-                std::cout << "[✓] Async health check completed: " << response.message() << std::endl;
-            } else {
-                std::cout << "[✗] Async health check failed: " << status.message() << std::endl;
-            } }, 3000);
-
     // Async Create with future
     interfaces::CreateRequest create_req;
 
@@ -180,11 +153,8 @@ void ExampleStreamingOperations(InterfacesClient &client)
     std::cout << "Starting subscription (will timeout after 5 seconds)..." << std::endl;
 
     int event_count = 0;
-    auto status = client.Subscribe(sub_req, [&event_count](const interfaces::SubscribeResponse &response)
-                                   {
-            ++event_count;
-            std::cout << "[Event " << event_count << "] Received subscription response: " 
-                      << response.message() << std::endl; }, 5000); // 5 second timeout
+    interfaces::SubscribeResponse sub_resp;
+    auto status = client.Subscribe(sub_req, sub_resp, 5000); // 5 second timeout
 
     if (status)
     {
@@ -223,14 +193,6 @@ void ExampleConnectionManagement()
         else
         {
             std::cout << "[⚠] Channel not ready within timeout" << std::endl;
-        }
-
-        // Get server info
-        std::string server_info;
-        status = client->GetServerInfo(server_info);
-        if (status && !server_info.empty())
-        {
-            std::cout << "Server info: " << server_info << std::endl;
         }
 
         // Use the connected client

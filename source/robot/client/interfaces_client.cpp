@@ -17,7 +17,7 @@ using namespace humanoid_robot::clientSDK::robot;
 using namespace humanoid_robot::clientSDK::common;
 
 // Private implementation class
-class InterfacesClient::Impl
+class InterfacesClient::InterfacesClientImpl
 {
 public:
     std::shared_ptr<grpc::Channel> channel_;
@@ -25,9 +25,9 @@ public:
     std::string target_;
     bool connected_;
 
-    Impl() : connected_(false) {}
+    InterfacesClientImpl() : connected_(false) {}
 
-    ~Impl()
+    ~InterfacesClientImpl()
     {
         if (connected_)
         {
@@ -40,7 +40,7 @@ public:
 // Constructor and Destructor
 // =================================================================
 
-InterfacesClient::InterfacesClient() : pImpl_(std::make_unique<Impl>())
+InterfacesClient::InterfacesClient() : pImpl_(std::make_unique<InterfacesClientImpl>())
 {
 }
 
@@ -116,25 +116,6 @@ bool InterfacesClient::IsConnected() const
 // Synchronous Methods
 // =================================================================
 
-Status InterfacesClient::Create(
-    const interfaces::CreateRequest &request,
-    interfaces::CreateResponse &response,
-    int64_t timeout_ms)
-{
-    if (!IsConnected())
-    {
-        return Status(
-            std::make_error_code(std::errc::not_connected),
-            "Client not connected");
-    }
-
-    grpc::ClientContext context;
-    context.set_deadline(GetDeadline(timeout_ms));
-
-    grpc::Status status = pImpl_->stub_->Create(&context, request, &response);
-    return ConvertGrpcStatus(status);
-}
-
 Status InterfacesClient::Send(
     const interfaces::SendRequest &request,
     interfaces::SendResponse &response,
@@ -151,25 +132,6 @@ Status InterfacesClient::Send(
     context.set_deadline(GetDeadline(timeout_ms));
 
     grpc::Status status = pImpl_->stub_->Send(&context, request, &response);
-    return ConvertGrpcStatus(status);
-}
-
-Status InterfacesClient::Delete(
-    const interfaces::DeleteRequest &request,
-    interfaces::DeleteResponse &response,
-    int64_t timeout_ms)
-{
-    if (!IsConnected())
-    {
-        return Status(
-            std::make_error_code(std::errc::not_connected),
-            "Client not connected");
-    }
-
-    grpc::ClientContext context;
-    context.set_deadline(GetDeadline(timeout_ms));
-
-    grpc::Status status = pImpl_->stub_->Delete(&context, request, &response);
     return ConvertGrpcStatus(status);
 }
 
@@ -190,6 +152,30 @@ Status InterfacesClient::Query(
 
     grpc::Status status = pImpl_->stub_->Query(&context, request, &response);
     return ConvertGrpcStatus(status);
+}
+
+Status InterfacesClient::Action(
+    const interfaces::ActionRequest &request,
+    std::unique_ptr<::grpc::ClientReader<::interfaces::ActionResponse>> &reader,
+    grpc::ClientContext &context)
+{
+    if (!IsConnected())
+    {
+        return Status(
+            std::make_error_code(std::errc::not_connected),
+            "Client not connected");
+    }
+
+    reader = pImpl_->stub_->Action(&context, request);
+
+    if (!reader)
+    {
+        return Status(
+            std::make_error_code(std::errc::io_error),
+            "Failed to create action stream");
+    }
+
+    return Status(); // 成功
 }
 
 Status InterfacesClient::Unsubscribe(
@@ -214,45 +200,6 @@ Status InterfacesClient::Unsubscribe(
 // =================================================================
 // Asynchronous Methods (Future-based)
 // =================================================================
-
-AsyncResult<interfaces::CreateResponse> InterfacesClient::CreateAsync(
-    const interfaces::CreateRequest &request,
-    int64_t timeout_ms)
-{
-    auto promise = std::make_shared<std::promise<Status>>();
-    auto future = promise->get_future();
-
-    CreateAsync(request, [promise](const Status &status, const interfaces::CreateResponse &response)
-                { promise->set_value(status); }, timeout_ms);
-
-    return future;
-}
-
-void InterfacesClient::CreateAsync(
-    const interfaces::CreateRequest &request,
-    AsyncCallback<interfaces::CreateResponse> callback,
-    int64_t timeout_ms)
-{
-    // 使用 weak_ptr 避免循环引用和内存泄漏
-    std::weak_ptr<InterfacesClient> weak_self = shared_from_this();
-
-    std::thread([weak_self, request, callback, timeout_ms]()
-                {
-                // 尝试获取 shared_ptr，检查对象是否仍然存在
-                if (auto self = weak_self.lock()) {
-                    interfaces::CreateResponse response;
-                    auto status = self->Create(request, response, timeout_ms);
-                    callback(status, response);
-                } else {
-                    // 对象已被销毁，调用回调通知错误
-                    interfaces::CreateResponse response;
-                    Status error_status(
-                        std::make_error_code(std::errc::operation_canceled),
-                        "Client object has been destroyed");
-                    callback(error_status, response);
-                } })
-        .detach();
-}
 
 AsyncResult<interfaces::SendResponse> InterfacesClient::SendAsync(
     const interfaces::SendRequest &request,
@@ -459,19 +406,4 @@ namespace humanoid_robot::clientSDK::factory
         client = std::shared_ptr<robot::InterfacesClient>(new robot::InterfacesClient());
         return client->Connect(target);
     }
-}
-
-Status InterfacesClient::GetSubscriptionStatus(
-    const std::string &subscription_id,
-    base_types::Dictionary &subscription_info)
-{
-    if (!IsConnected())
-    {
-        return Status(std::make_error_code(std::errc::not_connected), "Client not connected");
-    }
-
-    std::cout << "Getting subscription status for: " << subscription_id << std::endl;
-
-    // TODO: 实际实现需要查询服务端订阅状态
-    return Status();
 }

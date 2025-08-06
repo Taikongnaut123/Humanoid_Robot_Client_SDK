@@ -11,9 +11,17 @@
 
 #include "robot/client/interfaces_client.h"
 #include "interfaces/interfaces_request_response.pb.h"
+#include "printUtil.h" // Custom utility for printing key-value lists
 
 using namespace humanoid_robot::clientSDK::robot;
 using namespace humanoid_robot::clientSDK::common;
+using namespace base_types;
+using namespace humanoid_robot::utils::PB;
+
+std::chrono::system_clock::time_point GetDeadline(int64_t timeout_ms)
+{
+    return std::chrono::system_clock::now() + std::chrono::milliseconds(timeout_ms);
+}
 
 void PrintStatus(const Status &status, const std::string &operation)
 {
@@ -32,46 +40,66 @@ void ExampleSyncOperations(InterfacesClient &client)
 {
     std::cout << "\n=== Synchronous Operations Example ===" << std::endl;
 
-    // 2. Create Resource
-    interfaces::CreateRequest create_req;
+    // 2. Send Resource
+    interfaces::SendRequest send_req;
 
     // Set request data
-    auto *req_data = create_req.mutable_requestdata();
-    auto *req_items = req_data->mutable_keyvaluelist();
+    auto map = send_req.mutable_input()->mutable_keyvaluelist();
+    {
+        Variant var;
+        var.set_stringvalue("example_resource");
+        map->insert(std::make_pair("name", var));
+    }
+    {
+        Variant var;
+        var.set_int32value(42);
+        map->insert(std::make_pair("value", var));
+    }
 
-    // Add name field
-    base_types::Variant name_variant;
-    name_variant.set_type(base_types::Variant::KStringValue);
-    name_variant.set_stringvalue("example_resource");
-    (*req_items)["name"] = name_variant;
+    auto paramsMap = send_req.mutable_params()->mutable_keyvaluelist();
+    {
+        Variant var;
+        var.set_stringvalue("example_param");
+        paramsMap->insert(std::make_pair("param1", var));
+    }
+    {
+        Variant var;
+        var.set_int32value(30);
+        paramsMap->insert(std::make_pair("timeout", var));
+    }
+    {
+        Variant var;
+        var.set_stringvalue("example-001");
+        paramsMap->insert(std::make_pair("correlationid", var));
+    }
 
-    // Add value field
-    base_types::Variant value_variant;
-    value_variant.set_type(base_types::Variant::KInt32Value);
-    value_variant.set_int32value(42);
-    (*req_items)["value"] = value_variant;
-
-    // Set parameters
-    auto *params = create_req.mutable_params();
-    params->set_timeout(30);
-    params->set_correlationid("example-001");
-
-    interfaces::CreateResponse create_resp;
-    auto status = client.Create(create_req, create_resp);
-    PrintStatus(status, "Create Resource");
+    interfaces::SendResponse send_resp;
+    auto status = client.Send(send_req, send_resp);
+    PrintStatus(status, "Send Resource");
 
     if (status)
     {
-        std::cout << "    Resource ID: " << create_resp.resourceid() << std::endl;
-        std::cout << "    Status: " << static_cast<int>(create_resp.status()) << std::endl;
-        std::cout << "    Message: " << create_resp.message() << std::endl;
+        print_keyvaluelist(send_resp.output().keyvaluelist());
     }
 
     // 3. Query Resources
     interfaces::QueryRequest query_req;
-    query_req.set_queryid("find_resources");
-    query_req.set_limit(10);
-    query_req.set_offset(0);
+    auto input_map = query_req.mutable_input()->mutable_keyvaluelist();
+    {
+        Variant var;
+        var.set_stringvalue("find_resources");
+        input_map->insert(std::make_pair("queryid", var));
+    }
+    {
+        Variant var;
+        var.set_int32value(10);
+        input_map->insert(std::make_pair("limit", var));
+    }
+    {
+        Variant var;
+        var.set_int32value(0);
+        input_map->insert(std::make_pair("offset", var));
+    }
 
     interfaces::QueryResponse query_resp;
     status = client.Query(query_req, query_resp);
@@ -79,30 +107,7 @@ void ExampleSyncOperations(InterfacesClient &client)
 
     if (status)
     {
-        std::cout << "    Found " << query_resp.totalcount() << " resources" << std::endl;
-        std::cout << "    Returned " << query_resp.results_size() << " results" << std::endl;
-    }
-
-    // 4. Send Message
-    interfaces::SendRequest send_req;
-    send_req.set_targetid("service_endpoint");
-
-    auto *msg_data = send_req.mutable_messagedata();
-    auto *msg_items = msg_data->mutable_keyvaluelist();
-
-    // Add message field
-    base_types::Variant msg_variant;
-    msg_variant.set_type(base_types::Variant::KStringValue);
-    msg_variant.set_stringvalue("Hello from InterfacesClient!");
-    (*msg_items)["message"] = msg_variant;
-
-    interfaces::SendResponse send_resp;
-    status = client.Send(send_req, send_resp);
-    PrintStatus(status, "Send Message");
-
-    if (status)
-    {
-        std::cout << "    Response: " << send_resp.message() << std::endl;
+        print_keyvaluelist(query_resp.output().keyvaluelist());
     }
 }
 
@@ -111,27 +116,49 @@ void ExampleAsyncOperations(InterfacesClient &client)
 {
     std::cout << "\n=== Asynchronous Operations Example ===" << std::endl;
 
-    // Async Create with future
-    interfaces::CreateRequest create_req;
+    // Async Send with future
+    interfaces::SendRequest send_req;
 
-    auto *req_data = create_req.mutable_requestdata();
-    auto *req_items = req_data->mutable_keyvaluelist();
+    // Set request data
+    auto map = send_req.mutable_input()->mutable_keyvaluelist();
+    {
+        Variant var;
+        var.set_stringvalue("example_resource");
+        map->insert(std::make_pair("name", var));
+    }
+    {
+        Variant var;
+        var.set_int32value(42);
+        map->insert(std::make_pair("value", var));
+    }
 
-    base_types::Variant async_variant;
-    async_variant.set_type(base_types::Variant::KBoolValue);
-    async_variant.set_boolvalue(true);
-    (*req_items)["async"] = async_variant;
+    auto paramsMap = send_req.mutable_params()->mutable_keyvaluelist();
+    {
+        Variant var;
+        var.set_stringvalue("example_param");
+        paramsMap->insert(std::make_pair("param1", var));
+    }
+    {
+        Variant var;
+        var.set_int32value(30);
+        paramsMap->insert(std::make_pair("timeout", var));
+    }
+    {
+        Variant var;
+        var.set_stringvalue("example-001");
+        paramsMap->insert(std::make_pair("correlationid", var));
+    }
 
-    std::cout << "Starting async create..." << std::endl;
-    auto future = client.CreateAsync(create_req);
+    std::cout << "Starting async send..." << std::endl;
+    auto future = client.SendAsync(send_req);
 
     // Do other work while waiting
-    std::cout << "Doing other work while create is processing..." << std::endl;
+    std::cout << "Doing other work while send is processing..." << std::endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // Wait for result
     auto status = future.get();
-    PrintStatus(status, "Async Create Resource");
+    PrintStatus(status, "Async Send Resource");
 
     // Give some time for callbacks to complete
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -142,27 +169,57 @@ void ExampleStreamingOperations(InterfacesClient &client)
 {
     std::cout << "\n=== Streaming Operations Example ===" << std::endl;
 
-    interfaces::SubscribeRequest sub_req;
-    sub_req.set_topicid("test_topic");
+    interfaces::ActionRequest Act_req;
+    auto act_map = Act_req.mutable_input()->mutable_keyvaluelist();
+    {
+        Variant var;
+        var.set_stringvalue("start_streaming");
+        act_map->insert(std::make_pair("action", var));
+    }
+    {
+        Variant var;
+        var.set_int32value(5);
+        act_map->insert(std::make_pair("duration", var));
+    }
+    {
+        Variant var;
+        var.set_stringvalue("test_topic");
+        act_map->insert(std::make_pair("topic", var));
+    }
+    auto params_map = Act_req.mutable_params()->mutable_keyvaluelist();
+    {
+        Variant var;
+        var.set_stringvalue("stream_param");
+        params_map->insert(std::make_pair("param1", var));
+    }
+    {
+        Variant var;
+        var.set_int32value(10);
+        params_map->insert(std::make_pair("timeout", var));
+    }
+    {
+        Variant var;
+        var.set_stringvalue("stream-001");
+        params_map->insert(std::make_pair("correlationid", var));
+    }
 
-    // Set subscription parameters
-    auto *sub_params = sub_req.mutable_params();
-    sub_params->set_timeout(5); // 5 second subscription
-    sub_params->set_correlationid("stream-001");
-
-    std::cout << "Starting subscription (will timeout after 5 seconds)..." << std::endl;
+    std::cout << "Starting action (will timeout after 5 seconds)..." << std::endl;
 
     int event_count = 0;
-    interfaces::SubscribeResponse sub_resp;
-    auto status = client.Subscribe(sub_req, sub_resp, 5000); // 5 second timeout
+    interfaces::ActionResponse act_resp;
+    std::unique_ptr<::grpc::ClientReader<::interfaces::ActionResponse>> reader;
+    grpc::ClientContext context;
+    context.set_deadline(GetDeadline(5000));
+
+    auto status = client.Action(Act_req, reader, context);
 
     if (status)
     {
-        std::cout << "[✓] Subscription completed normally" << std::endl;
+        std::cout << "[✓] Action completed normally" << std::endl;
     }
     else
     {
-        std::cout << "[✗] Subscription ended with error: " << status.message() << std::endl;
+        std::cout << "[✗] Action ended with error: " << status.message() << std::endl;
     }
 
     std::cout << "Total events received: " << event_count << std::endl;

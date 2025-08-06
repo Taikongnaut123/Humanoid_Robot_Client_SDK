@@ -58,18 +58,6 @@ namespace humanoid_robot
                 // =================================================================
 
                 /**
-                 * Create a new resource
-                 * @param request The create request
-                 * @param response The create response (output)
-                 * @param timeout_ms Timeout in milliseconds (default: 5000)
-                 * @return Status of the operation
-                 */
-                Status Create(
-                    const interfaces::CreateRequest &request,
-                    interfaces::CreateResponse &response,
-                    int64_t timeout_ms = 5000);
-
-                /**
                  * Send a message
                  * @param request The send request
                  * @param response The send response (output)
@@ -79,18 +67,6 @@ namespace humanoid_robot
                 Status Send(
                     const interfaces::SendRequest &request,
                     interfaces::SendResponse &response,
-                    int64_t timeout_ms = 5000);
-
-                /**
-                 * Delete a resource
-                 * @param request The delete request
-                 * @param response The delete response (output)
-                 * @param timeout_ms Timeout in milliseconds (default: 5000)
-                 * @return Status of the operation
-                 */
-                Status Delete(
-                    const interfaces::DeleteRequest &request,
-                    interfaces::DeleteResponse &response,
                     int64_t timeout_ms = 5000);
 
                 /**
@@ -104,6 +80,18 @@ namespace humanoid_robot
                     const interfaces::QueryRequest &request,
                     interfaces::QueryResponse &response,
                     int64_t timeout_ms = 5000);
+
+                /**
+                 * Action resources with streaming response
+                 * @param request The action request
+                 * @param reader The client reader for streaming responses (output)
+                 * @param context The client context (must remain valid during stream lifetime)
+                 * @return Status of the operation
+                 */
+                Status Action(
+                    const interfaces::ActionRequest &request,
+                    std::unique_ptr<::grpc::ClientReader<::interfaces::ActionResponse>> &reader,
+                    grpc::ClientContext &context);
 
                 /**
                  * Unsubscribe from a subscription
@@ -120,21 +108,6 @@ namespace humanoid_robot
                 // =================================================================
                 // Asynchronous Methods
                 // =================================================================
-
-                /**
-                 * Async create - returns immediately with a future
-                 */
-                AsyncResult<interfaces::CreateResponse> CreateAsync(
-                    const interfaces::CreateRequest &request,
-                    int64_t timeout_ms = 5000);
-
-                /**
-                 * Async create with callback
-                 */
-                void CreateAsync(
-                    const interfaces::CreateRequest &request,
-                    AsyncCallback<interfaces::CreateResponse> callback,
-                    int64_t timeout_ms = 5000);
 
                 /**
                  * Async send - returns immediately with a future
@@ -182,16 +155,6 @@ namespace humanoid_robot
                     interfaces::SubscribeResponse &response,
                     int64_t timeout_ms = 0);
 
-                /**
-                 * 查询订阅状态
-                 * @param subscription_id 订阅ID
-                 * @param subscription_info 输出订阅信息
-                 * @return 查询状态
-                 */
-                Status GetSubscriptionStatus(
-                    const std::string &subscription_id,
-                    base_types::Dictionary &subscription_info);
-
                 // =================================================================
                 // Utility Methods
                 // =================================================================
@@ -210,8 +173,8 @@ namespace humanoid_robot
 
             private:
                 // Private implementation details
-                class Impl;
-                std::unique_ptr<Impl> pImpl_;
+                class InterfacesClientImpl;
+                std::unique_ptr<InterfacesClientImpl> pImpl_;
 
                 // Disable copy and assignment
                 InterfacesClient(const InterfacesClient &) = delete;

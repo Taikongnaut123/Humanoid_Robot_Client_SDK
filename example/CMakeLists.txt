@@ -29,6 +29,7 @@ include_directories(
     ${CLIENT_SDK_ROOT_INCLUDE_DIR}
     ${PB_INCLUDE_DIR}
     ${Protobuf_INCLUDE_DIRS}
+    ${PB_UTILS_INCLUDE_DIR}
 )
 
 # 查找所有示例源文件
@@ -55,12 +56,13 @@ foreach(EXAMPLE_SOURCE ${EXAMPLE_SOURCES})
         robot_common
         libinterfacesPB
         libcommonPB
+        libPBUtils
         protobuf::libprotobuf
         gRPC::grpc++
     )
     
     # 添加依赖关系
-    add_dependencies(${EXAMPLE_NAME} robot_client robot_common libinterfacesPB libcommonPB)
+    add_dependencies(${EXAMPLE_NAME} robot_client robot_common libinterfacesPB libcommonPB libPBUtils) 
     
     message(STATUS "Created example: ${EXAMPLE_NAME}")
 endforeach()

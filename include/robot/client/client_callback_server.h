@@ -26,9 +26,7 @@ namespace humanoid_robot
         namespace robot
         {
             // 回调函数类型定义
-            using SubscriptionMessageCallback = std::function<void(const interfaces::SubscriptionNotification &)>;
-            using SubscriptionStatusCallback = std::function<void(const interfaces::SubscriptionStatusChange &)>;
-            using SubscriptionErrorCallback = std::function<void(const interfaces::SubscriptionError &)>;
+            using SubscriptionMessageCallback = std::function<void(const interfaces::Notification &)>;
 
             /**
              * ClientCallbackServer - 客户端回调服务器
@@ -92,29 +90,9 @@ namespace humanoid_robot
                  */
                 void SetSubscriptionMessageCallback(SubscriptionMessageCallback callback);
 
-                /**
-                 * 注册订阅状态变化回调
-                 * @param callback 状态变化回调函数
-                 */
-                void SetSubscriptionStatusCallback(SubscriptionStatusCallback callback);
-
-                /**
-                 * 注册订阅错误回调
-                 * @param callback 错误回调函数
-                 */
-                void SetSubscriptionErrorCallback(SubscriptionErrorCallback callback);
-
                 // =================================================================
                 // 便捷方法
                 // =================================================================
-
-                /**
-                 * 一次性设置所有回调
-                 */
-                void SetAllCallbacks(
-                    SubscriptionMessageCallback message_callback,
-                    SubscriptionStatusCallback status_callback,
-                    SubscriptionErrorCallback error_callback);
 
                 /**
                  * 获取客户端服务端点（用于订阅时告知服务端）
@@ -139,18 +117,16 @@ namespace humanoid_robot
             /**
              * 创建并启动客户端回调服务器
              * @param listen_address 监听地址
+             * @param status 输出状态
              * @param port 监听端口（0表示自动分配）
              * @param message_callback 消息回调
-             * @param status_callback 状态回调（可选）
-             * @param error_callback 错误回调（可选）
-             * @return 服务器实例和状态
+             * @return 服务器实例
              */
-            std::pair<std::unique_ptr<ClientCallbackServer>, Status> CreateCallbackServer(
+            std::unique_ptr<ClientCallbackServer> CreateCallbackServer(
                 const std::string &listen_address,
+                Status &status,
                 int port = 0,
-                SubscriptionMessageCallback message_callback = nullptr,
-                SubscriptionStatusCallback status_callback = nullptr,
-                SubscriptionErrorCallback error_callback = nullptr);
+                SubscriptionMessageCallback message_callback = nullptr);
 
         } // namespace robot
     } // namespace clientSDK

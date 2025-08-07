@@ -16,7 +16,8 @@ find_package(gRPC CONFIG REQUIRED)
 # endif()
 
 add_library(robot_client SHARED
-    interfaces_client.cpp)
+    interfaces_client.cpp
+    client_callback_server.cpp)
 message(CLIENT_SDK_COMMON_INCLUDE_DIR: ${CLIENT_SDK_COMMON_INCLUDE_DIR})
 
 target_include_directories(

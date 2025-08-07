@@ -25,21 +25,17 @@ class ClientCallbackServiceImpl final : public interfaces::ClientCallbackService
 {
 public:
     ClientCallbackServiceImpl(
-        SubscriptionMessageCallback message_callback,
-        SubscriptionStatusCallback status_callback,
-        SubscriptionErrorCallback error_callback)
-        : message_callback_(message_callback), status_callback_(status_callback), error_callback_(error_callback)
+        SubscriptionMessageCallback message_callback)
+        : message_callback_(message_callback)
     {
     }
 
     grpc::Status OnSubscriptionMessage(
         grpc::ServerContext *context,
-        const interfaces::SubscriptionNotification *request,
+        const interfaces::Notification *request,
         interfaces::NotificationAck *response) override
     {
-        std::cout << "Received subscription message for objectId: " << request->objectid()
-                  << ", messageId: " << request->messageid() << std::endl;
-
+        std::cout << "Received subscription message from client: " << std::endl;
         if (message_callback_)
         {
             try
@@ -49,93 +45,19 @@ public:
             catch (const std::exception &e)
             {
                 std::cerr << "Error in message callback: " << e.what() << std::endl;
-                response->set_received(false);
-                response->set_message("Callback execution failed: " + std::string(e.what()));
+                response->set_ret(-0600060001); // 回调执行失败,客户端不关心服务器处理结果，可以不设置ret
                 return grpc::Status::OK;
             }
         }
 
         // 设置确认响应
-        response->set_received(true);
-        response->set_ackid(request->messageid());
-        response->set_message("Message received successfully");
-        response->set_timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                    std::chrono::system_clock::now().time_since_epoch())
-                                    .count());
-
-        return grpc::Status::OK;
-    }
-
-    grpc::Status OnSubscriptionStatusChange(
-        grpc::ServerContext *context,
-        const interfaces::SubscriptionStatusChange *request,
-        interfaces::NotificationAck *response) override
-    {
-        std::cout << "Received status change for objectId: " << request->objectid()
-                  << ", status: " << request->oldstatus() << " -> " << request->newstatus() << std::endl;
-
-        if (status_callback_)
-        {
-            try
-            {
-                status_callback_(*request);
-            }
-            catch (const std::exception &e)
-            {
-                std::cerr << "Error in status callback: " << e.what() << std::endl;
-                response->set_received(false);
-                response->set_message("Callback execution failed: " + std::string(e.what()));
-                return grpc::Status::OK;
-            }
-        }
-
-        response->set_received(true);
-        response->set_ackid(request->subscriptionid());
-        response->set_message("Status change received successfully");
-        response->set_timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                    std::chrono::system_clock::now().time_since_epoch())
-                                    .count());
-
-        return grpc::Status::OK;
-    }
-
-    grpc::Status OnSubscriptionError(
-        grpc::ServerContext *context,
-        const interfaces::SubscriptionError *request,
-        interfaces::NotificationAck *response) override
-    {
-        std::cout << "Received subscription error for objectId: " << request->objectid()
-                  << ", error: " << request->error().message() << std::endl;
-
-        if (error_callback_)
-        {
-            try
-            {
-                error_callback_(*request);
-            }
-            catch (const std::exception &e)
-            {
-                std::cerr << "Error in error callback: " << e.what() << std::endl;
-                response->set_received(false);
-                response->set_message("Callback execution failed: " + std::string(e.what()));
-                return grpc::Status::OK;
-            }
-        }
-
-        response->set_received(true);
-        response->set_ackid(request->subscriptionid());
-        response->set_message("Error notification received successfully");
-        response->set_timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                    std::chrono::system_clock::now().time_since_epoch())
-                                    .count());
+        response->set_ret(0);
 
         return grpc::Status::OK;
     }
 
 private:
     SubscriptionMessageCallback message_callback_;
-    SubscriptionStatusCallback status_callback_;
-    SubscriptionErrorCallback error_callback_;
 };
 
 // =============================================================================
@@ -154,8 +76,6 @@ public:
 
     // 回调函数
     SubscriptionMessageCallback message_callback_;
-    SubscriptionStatusCallback status_callback_;
-    SubscriptionErrorCallback error_callback_;
 
     Impl() : listen_port_(0), running_(false) {}
 
@@ -207,9 +127,7 @@ Status ClientCallbackServer::Start(const std::string &listen_address, int port)
 
         // 创建服务实现
         pImpl_->service_impl_ = std::make_unique<ClientCallbackServiceImpl>(
-            pImpl_->message_callback_,
-            pImpl_->status_callback_,
-            pImpl_->error_callback_);
+            pImpl_->message_callback_);
 
         // 构建服务器
         grpc::ServerBuilder builder;
@@ -235,9 +153,13 @@ Status ClientCallbackServer::Start(const std::string &listen_address, int port)
         // 在单独线程中运行服务器
         pImpl_->server_thread_ = std::thread([this]()
                                              {
+                                                try{
+
             std::cout << "Client callback server listening on " 
                       << pImpl_->listen_address_ << ":" << pImpl_->listen_port_ << std::endl;
-            pImpl_->server_->Wait(); });
+            pImpl_->server_->Wait(); }catch (const std::exception &e) {
+                std::cerr << "❌ Error in server thread: " << e.what() << std::endl;
+                                                } });
 
         return Status();
     }
@@ -251,16 +173,65 @@ Status ClientCallbackServer::Start(const std::string &listen_address, int port)
 
 Status ClientCallbackServer::StartWithAutoPort(const std::string &listen_address, int &assigned_port)
 {
-    // 使用端口0让系统自动分配端口
-    auto status = Start(listen_address, 0);
-    if (status)
+    if (pImpl_->running_)
     {
-        // TODO: 这里需要实际获取分配的端口号
-        // 目前简化实现，使用默认端口范围
-        assigned_port = 0; // 需要从gRPC服务器获取实际端口
-        pImpl_->listen_port_ = assigned_port;
+        return Status(
+            std::make_error_code(std::errc::operation_not_permitted),
+            "Server is already running");
     }
-    return status;
+
+    try
+    {
+        pImpl_->listen_address_ = listen_address;
+        pImpl_->listen_port_ = 0; // 使用0让系统自动分配
+
+        // 构建监听地址
+        std::string server_address = listen_address + ":0";
+
+        // 创建服务实现
+        pImpl_->service_impl_ = std::make_unique<ClientCallbackServiceImpl>(
+            pImpl_->message_callback_);
+
+        // 构建服务器
+        grpc::ServerBuilder builder;
+        int selected_port = 0;
+        builder.AddListeningPort(server_address, grpc::InsecureServerCredentials(), &selected_port);
+        builder.RegisterService(pImpl_->service_impl_.get());
+
+        // 启用健康检查和反射（可选）
+        grpc::EnableDefaultHealthCheckService(true);
+        grpc::reflection::InitProtoReflectionServerBuilderPlugin();
+
+        // 构建并启动服务器
+        pImpl_->server_ = builder.BuildAndStart();
+
+        if (!pImpl_->server_)
+        {
+            return Status(
+                std::make_error_code(std::errc::address_not_available),
+                "Failed to start gRPC callback server");
+        }
+
+        // 获取实际分配的端口
+        assigned_port = selected_port;
+        pImpl_->listen_port_ = assigned_port;
+        pImpl_->running_ = true;
+
+        // 在单独线程中运行服务器
+        pImpl_->server_thread_ = std::thread([this]()
+                                             {
+            std::cout << "Client callback server listening on " 
+                      << pImpl_->listen_address_ << ":" << pImpl_->listen_port_ << std::endl;
+            pImpl_->server_->Wait(); });
+
+        return Status();
+    }
+    catch (const std::exception &e)
+    {
+        return Status(
+            std::make_error_code(std::errc::operation_not_supported),
+            std::string("Failed to start callback server: ") + e.what());
+    }
 }
 
 void ClientCallbackServer::Stop()
@@ -285,32 +256,12 @@ int ClientCallbackServer::GetListenPort() const
 
 void ClientCallbackServer::SetSubscriptionMessageCallback(SubscriptionMessageCallback callback)
 {
-    pImpl_->message_callback_ = callback;
-    if (pImpl_->service_impl_)
+    if (pImpl_->running_)
     {
-        // 如果服务已经创建，需要重新创建服务实现
-        // 在实际使用中，建议在启动前设置所有回调
+        throw std::runtime_error("Cannot set callback while server is running. Please set callback before starting the server.");
     }
-}
 
-void ClientCallbackServer::SetSubscriptionStatusCallback(SubscriptionStatusCallback callback)
-{
-    pImpl_->status_callback_ = callback;
-}
-
-void ClientCallbackServer::SetSubscriptionErrorCallback(SubscriptionErrorCallback callback)
-{
-    pImpl_->error_callback_ = callback;
-}
-
-void ClientCallbackServer::SetAllCallbacks(
-    SubscriptionMessageCallback message_callback,
-    SubscriptionStatusCallback status_callback,
-    SubscriptionErrorCallback error_callback)
-{
-    pImpl_->message_callback_ = message_callback;
-    pImpl_->status_callback_ = status_callback;
-    pImpl_->error_callback_ = error_callback;
+    pImpl_->message_callback_ = callback;
 }
 
 std::string ClientCallbackServer::GetClientEndpoint() const
@@ -323,36 +274,42 @@ std::string ClientCallbackServer::GetClientEndpoint() const
 }
 
 // =============================================================================
-// 便捷工厂函数
+// 便捷工厂函数实现
 // =============================================================================
 
-std::pair<std::unique_ptr<ClientCallbackServer>, Status>
-humanoid_robot::clientSDK::robot::CreateCallbackServer(
-    const std::string &listen_address,
-    int port,
-    SubscriptionMessageCallback message_callback,
-    SubscriptionStatusCallback status_callback,
-    SubscriptionErrorCallback error_callback)
+namespace humanoid_robot
 {
-    auto server = std::make_unique<ClientCallbackServer>();
-
-    // 设置回调
-    if (message_callback || status_callback || error_callback)
+    namespace clientSDK
     {
-        server->SetAllCallbacks(message_callback, status_callback, error_callback);
-    }
+        namespace robot
+        {
+            std::unique_ptr<ClientCallbackServer> CreateCallbackServer(
+                const std::string &listen_address,
+                Status &status,
+                int port,
+                SubscriptionMessageCallback message_callback)
+            {
+                auto server = std::make_unique<ClientCallbackServer>();
 
-    // 启动服务器
-    Status status;
-    if (port == 0)
-    {
-        int assigned_port;
-        status = server->StartWithAutoPort(listen_address, assigned_port);
-    }
-    else
-    {
-        status = server->Start(listen_address, port);
-    }
+                // 设置回调函数
+                if (message_callback)
+                {
+                    server->SetSubscriptionMessageCallback(message_callback);
+                }
 
-    return std::make_pair(std::move(server), status);
-}
+                // 启动服务器
+                if (port == 0)
+                {
+                    int assigned_port;
+                    status = server->StartWithAutoPort(listen_address, assigned_port);
+                }
+                else
+                {
+                    status = server->Start(listen_address, port);
+                }
+
+                return server;
+            }
+        } // namespace robot
+    } // namespace clientSDK
+} // namespace humanoid_robot

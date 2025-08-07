@@ -12,6 +12,8 @@
 #include "robot/client/interfaces_client.h"
 #include "interfaces/interfaces_request_response.pb.h"
 #include "printUtil.h" // Custom utility for printing key-value lists
+#include "interfaces/interfaces_callback.pb.h"
+#include "robot/client/client_callback_server.h"
 
 using namespace humanoid_robot::clientSDK::robot;
 using namespace humanoid_robot::clientSDK::common;
@@ -268,6 +270,70 @@ void ExampleConnectionManagement()
     }
 }
 
+using SubscriptionMessageCallback = std::function<void(const interfaces::Notification &)>;
+
+void NotificationHandler(const interfaces::Notification &notification)
+{
+    std::cout << "[Notification Received] ";
+    print_keyvaluelist(notification.notifymessage().keyvaluelist());
+}
+
+void ExampleSubscription()
+{
+    std::cout << "\n=== Subscription Example ===" << std::endl;
+    // Create client using convenience function (now using shared_ptr for async safety)
+    std::shared_ptr<InterfacesClient> client;
+    auto status = humanoid_robot::clientSDK::factory::CreateInterfacesClient("localhost", 50051, client);
+    if (status)
+    {
+        std::cout << "[✓] Connected to server" << std::endl;
+    }
+    else
+    {
+        std::cout << "[✗] Failed to connect: " << status.message() << std::endl;
+        return;
+    }
+    // Create and start callback server
+    Status server_status;
+    auto callback_server = humanoid_robot::clientSDK::robot::CreateCallbackServer(
+        "127.0.0.1",
+        server_status,
+        50052, // 固定端口
+        [](const interfaces::Notification &notification)
+        {
+            NotificationHandler(notification);
+        });
+
+    if (server_status)
+    {
+        std::cout << "[✓] Callback server started successfully" << std::endl;
+    }
+    else
+    {
+        std::cout << "[✗] Failed to start callback server: " << server_status.message() << std::endl;
+        return;
+    }
+    // Subscribe to notifications
+    interfaces::SubscribeRequest sub_req;
+    interfaces::SubscribeResponse sub_resp;
+    auto input_map = sub_req.mutable_input()->mutable_keyvaluelist();
+    {
+        Variant var;
+        var.set_stringvalue("127.0.0.1:50052");
+        input_map->insert(std::make_pair("client_endpoint", var));
+    }
+    status = client->Subscribe(sub_req, sub_resp, 1000);
+    if (status)
+    {
+        std::cout << "[✓] Subscribed to notifications" << std::endl;
+    }
+    else
+    {
+        std::cout << "[✗] Failed to subscribe: " << status.message() << std::endl;
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(60000)); // 等待5秒后发送模拟通知
+}
+
 int main()
 {
     std::cout << "InterfacesClient Example" << std::endl;
@@ -275,14 +341,15 @@ int main()
 
     try
     {
-        ExampleConnectionManagement();
+        ExampleSubscription();
+        // ExampleConnectionManagement();
     }
     catch (const std::exception &e)
     {
         std::cerr << "Exception: " << e.what() << std::endl;
         return 1;
     }
-
+    std::this_thread::sleep_for(std::chrono::seconds(20000)); // Give time for async operations to complete
     std::cout << "\n[✓] Example completed" << std::endl;
     return 0;
 }

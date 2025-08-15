@@ -16,12 +16,13 @@
 
 using namespace humanoid_robot::clientSDK::robot;
 using namespace humanoid_robot::clientSDK::common;
+using namespace humanoid_robot::PB::interfaces;
 
 // =============================================================================
 // ClientCallbackServiceImpl - gRPC服务实现
 // =============================================================================
 
-class ClientCallbackServiceImpl final : public interfaces::ClientCallbackService::Service
+class ClientCallbackServiceImpl final : public ClientCallbackService::Service
 {
 public:
     ClientCallbackServiceImpl(
@@ -32,8 +33,8 @@ public:
 
     grpc::Status OnSubscriptionMessage(
         grpc::ServerContext *context,
-        const interfaces::Notification *request,
-        interfaces::NotificationAck *response) override
+        const Notification *request,
+        NotificationAck *response) override
     {
         std::cout << "Received subscription message from client: " << std::endl;
         if (message_callback_)

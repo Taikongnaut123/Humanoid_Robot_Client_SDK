@@ -36,7 +36,6 @@ install(DIRECTORY include/
 # 安装文档
 install(FILES 
         README.md
-        INSTALL.md
         DESIGN_DOCUMENT.md
         DESTINATION ${CMAKE_INSTALL_DOCDIR})
 

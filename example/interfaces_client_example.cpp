@@ -14,10 +14,12 @@
 #include "printUtil.h" // Custom utility for printing key-value lists
 #include "interfaces/interfaces_callback.pb.h"
 #include "robot/client/client_callback_server.h"
+#include "Log/wlog.hpp"
 
 using namespace humanoid_robot::clientSDK::robot;
 using namespace humanoid_robot::clientSDK::common;
-using namespace base_types;
+using namespace humanoid_robot::PB::common;
+using namespace humanoid_robot::PB::interfaces;
 using namespace humanoid_robot::utils::PB;
 
 std::chrono::system_clock::time_point GetDeadline(int64_t timeout_ms)
@@ -43,7 +45,7 @@ void ExampleSyncOperations(InterfacesClient &client)
     std::cout << "\n=== Synchronous Operations Example ===" << std::endl;
 
     // 2. Send Resource
-    interfaces::SendRequest send_req;
+    SendRequest send_req;
 
     // Set request data
     auto map = send_req.mutable_input()->mutable_keyvaluelist();
@@ -74,18 +76,25 @@ void ExampleSyncOperations(InterfacesClient &client)
         var.set_stringvalue("example-001");
         paramsMap->insert(std::make_pair("correlationid", var));
     }
+    std::unique_ptr<::grpc::ClientReaderWriter<::humanoid_robot::PB::interfaces::SendRequest, ::humanoid_robot::PB::interfaces::SendResponse>> readWriter;
 
-    interfaces::SendResponse send_resp;
-    auto status = client.Send(send_req, send_resp);
+    auto status = client.Send(readWriter, 5000);
+    auto ret = readWriter->Write(send_req);
     PrintStatus(status, "Send Resource");
-
+    SendResponse send_resp;
+    ret = readWriter->Read(&send_resp);
+    if (!ret)
+    {
+        std::cerr << "Failed to read response: " << readWriter->Finish().error_message() << std::endl;
+        return;
+    }
     if (status)
     {
         print_keyvaluelist(send_resp.output().keyvaluelist());
     }
 
     // 3. Query Resources
-    interfaces::QueryRequest query_req;
+    QueryRequest query_req;
     auto input_map = query_req.mutable_input()->mutable_keyvaluelist();
     {
         Variant var;
@@ -103,7 +112,7 @@ void ExampleSyncOperations(InterfacesClient &client)
         input_map->insert(std::make_pair("offset", var));
     }
 
-    interfaces::QueryResponse query_resp;
+    QueryResponse query_resp;
     status = client.Query(query_req, query_resp);
     PrintStatus(status, "Query Resources");
 
@@ -113,65 +122,65 @@ void ExampleSyncOperations(InterfacesClient &client)
     }
 }
 
-// Example: Asynchronous operations
-void ExampleAsyncOperations(InterfacesClient &client)
-{
-    std::cout << "\n=== Asynchronous Operations Example ===" << std::endl;
+// // Example: Asynchronous operations
+// void ExampleAsyncOperations(InterfacesClient &client)
+// {
+//     std::cout << "\n=== Asynchronous Operations Example ===" << std::endl;
 
-    // Async Send with future
-    interfaces::SendRequest send_req;
+//     // Async Send with future
+//     SendRequest send_req;
 
-    // Set request data
-    auto map = send_req.mutable_input()->mutable_keyvaluelist();
-    {
-        Variant var;
-        var.set_stringvalue("example_resource");
-        map->insert(std::make_pair("name", var));
-    }
-    {
-        Variant var;
-        var.set_int32value(42);
-        map->insert(std::make_pair("value", var));
-    }
+//     // Set request data
+//     auto map = send_req.mutable_input()->mutable_keyvaluelist();
+//     {
+//         Variant var;
+//         var.set_stringvalue("example_resource");
+//         map->insert(std::make_pair("name", var));
+//     }
+//     {
+//         Variant var;
+//         var.set_int32value(42);
+//         map->insert(std::make_pair("value", var));
+//     }
 
-    auto paramsMap = send_req.mutable_params()->mutable_keyvaluelist();
-    {
-        Variant var;
-        var.set_stringvalue("example_param");
-        paramsMap->insert(std::make_pair("param1", var));
-    }
-    {
-        Variant var;
-        var.set_int32value(30);
-        paramsMap->insert(std::make_pair("timeout", var));
-    }
-    {
-        Variant var;
-        var.set_stringvalue("example-001");
-        paramsMap->insert(std::make_pair("correlationid", var));
-    }
+//     auto paramsMap = send_req.mutable_params()->mutable_keyvaluelist();
+//     {
+//         Variant var;
+//         var.set_stringvalue("example_param");
+//         paramsMap->insert(std::make_pair("param1", var));
+//     }
+//     {
+//         Variant var;
+//         var.set_int32value(30);
+//         paramsMap->insert(std::make_pair("timeout", var));
+//     }
+//     {
+//         Variant var;
+//         var.set_stringvalue("example-001");
+//         paramsMap->insert(std::make_pair("correlationid", var));
+//     }
 
-    std::cout << "Starting async send..." << std::endl;
-    auto future = client.SendAsync(send_req);
+//     std::cout << "Starting async send..." << std::endl;
+//     auto future = client.SendAsync(send_req);
 
-    // Do other work while waiting
-    std::cout << "Doing other work while send is processing..." << std::endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//     // Do other work while waiting
+//     std::cout << "Doing other work while send is processing..." << std::endl;
+//     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    // Wait for result
-    auto status = future.get();
-    PrintStatus(status, "Async Send Resource");
+//     // Wait for result
+//     auto status = future.get();
+//     PrintStatus(status, "Async Send Resource");
 
-    // Give some time for callbacks to complete
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-}
+//     // Give some time for callbacks to complete
+//     std::this_thread::sleep_for(std::chrono::milliseconds(500));
+// }
 
 // Example: Streaming operations
 void ExampleStreamingOperations(InterfacesClient &client)
 {
     std::cout << "\n=== Streaming Operations Example ===" << std::endl;
 
-    interfaces::ActionRequest Act_req;
+    ActionRequest Act_req;
     auto act_map = Act_req.mutable_input()->mutable_keyvaluelist();
     {
         Variant var;
@@ -208,8 +217,8 @@ void ExampleStreamingOperations(InterfacesClient &client)
     std::cout << "Starting action (will timeout after 5 seconds)..." << std::endl;
 
     int event_count = 0;
-    interfaces::ActionResponse act_resp;
-    std::unique_ptr<::grpc::ClientReader<::interfaces::ActionResponse>> reader;
+    ActionResponse act_resp;
+    std::unique_ptr<::grpc::ClientReader<::ActionResponse>> reader;
     grpc::ClientContext context;
     context.set_deadline(GetDeadline(5000));
 
@@ -256,7 +265,7 @@ void ExampleConnectionManagement()
 
         // Use the connected client
         ExampleSyncOperations(*client);
-        ExampleAsyncOperations(*client);
+        // ExampleAsyncOperations(*client);
         ExampleStreamingOperations(*client);
 
         // Disconnect
@@ -270,9 +279,9 @@ void ExampleConnectionManagement()
     }
 }
 
-using SubscriptionMessageCallback = std::function<void(const interfaces::Notification &)>;
+using SubscriptionMessageCallback = std::function<void(const Notification &)>;
 
-void NotificationHandler(const interfaces::Notification &notification)
+void NotificationHandler(const Notification &notification)
 {
     std::cout << "[Notification Received] ";
     print_keyvaluelist(notification.notifymessage().keyvaluelist());
@@ -299,7 +308,7 @@ void ExampleSubscription()
         "127.0.0.1",
         server_status,
         50052, // 固定端口
-        [](const interfaces::Notification &notification)
+        [](const Notification &notification)
         {
             NotificationHandler(notification);
         });
@@ -314,8 +323,8 @@ void ExampleSubscription()
         return;
     }
     // Subscribe to notifications
-    interfaces::SubscribeRequest sub_req;
-    interfaces::SubscribeResponse sub_resp;
+    SubscribeRequest sub_req;
+    SubscribeResponse sub_resp;
     auto input_map = sub_req.mutable_input()->mutable_keyvaluelist();
     {
         Variant var;
@@ -336,20 +345,22 @@ void ExampleSubscription()
 
 int main()
 {
-    std::cout << "InterfacesClient Example" << std::endl;
-    std::cout << "========================" << std::endl;
+    WLOG_DEBUG("Start of main function", 1);
 
-    try
-    {
-        ExampleSubscription();
-        // ExampleConnectionManagement();
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Exception: " << e.what() << std::endl;
-        return 1;
-    }
-    std::this_thread::sleep_for(std::chrono::seconds(20000)); // Give time for async operations to complete
-    std::cout << "\n[✓] Example completed" << std::endl;
+    // std::cout << "InterfacesClient Example" << std::endl;
+    // std::cout << "========================" << std::endl;
+
+    // try
+    // {
+    //     ExampleSubscription();
+    //     // ExampleConnectionManagement();
+    // }
+    // catch (const std::exception &e)
+    // {
+    //     std::cerr << "Exception: " << e.what() << std::endl;
+    //     return 1;
+    // }
+    // std::this_thread::sleep_for(std::chrono::seconds(20000)); // Give time for async operations to complete
+    // std::cout << "\n[✓] Example completed" << std::endl;
     return 0;
 }

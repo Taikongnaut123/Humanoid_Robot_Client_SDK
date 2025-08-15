@@ -52,6 +52,7 @@ foreach(EXAMPLE_SOURCE ${EXAMPLE_SOURCES})
     
     # 链接库
     target_link_libraries(${EXAMPLE_NAME}
+    PUBLIC
         robot_client
         robot_common
         libinterfacesPB
@@ -59,6 +60,8 @@ foreach(EXAMPLE_SOURCE ${EXAMPLE_SOURCES})
         libPBUtils
         protobuf::libprotobuf
         gRPC::grpc++
+    PRIVATE
+        CHRIC_Common_Log
     )
     
     # 添加依赖关系

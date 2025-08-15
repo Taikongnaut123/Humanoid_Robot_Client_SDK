@@ -26,7 +26,7 @@ namespace humanoid_robot
         namespace robot
         {
             // 回调函数类型定义
-            using SubscriptionMessageCallback = std::function<void(const interfaces::Notification &)>;
+            using SubscriptionMessageCallback = std::function<void(const humanoid_robot::PB::interfaces::Notification &)>;
 
             /**
              * ClientCallbackServer - 客户端回调服务器

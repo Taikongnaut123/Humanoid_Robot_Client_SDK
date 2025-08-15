@@ -65,8 +65,7 @@ namespace humanoid_robot
                  * @return Status of the operation
                  */
                 Status Send(
-                    const interfaces::SendRequest &request,
-                    interfaces::SendResponse &response,
+                    std::unique_ptr<::grpc::ClientReaderWriter<::humanoid_robot::PB::interfaces::SendRequest, ::humanoid_robot::PB::interfaces::SendResponse>> &readWriter,
                     int64_t timeout_ms = 5000);
 
                 /**
@@ -77,8 +76,8 @@ namespace humanoid_robot
                  * @return Status of the operation
                  */
                 Status Query(
-                    const interfaces::QueryRequest &request,
-                    interfaces::QueryResponse &response,
+                    const humanoid_robot::PB::interfaces::QueryRequest &request,
+                    humanoid_robot::PB::interfaces::QueryResponse &response,
                     int64_t timeout_ms = 5000);
 
                 /**
@@ -89,8 +88,8 @@ namespace humanoid_robot
                  * @return Status of the operation
                  */
                 Status Action(
-                    const interfaces::ActionRequest &request,
-                    std::unique_ptr<::grpc::ClientReader<::interfaces::ActionResponse>> &reader,
+                    const humanoid_robot::PB::interfaces::ActionRequest &request,
+                    std::unique_ptr<::grpc::ClientReader<::humanoid_robot::PB::interfaces::ActionResponse>> &reader,
                     grpc::ClientContext &context);
 
                 /**
@@ -101,8 +100,8 @@ namespace humanoid_robot
                  * @return Status of the operation
                  */
                 Status Unsubscribe(
-                    const interfaces::UnsubscribeRequest &request,
-                    interfaces::UnsubscribeResponse &response,
+                    const humanoid_robot::PB::interfaces::UnsubscribeRequest &request,
+                    humanoid_robot::PB::interfaces::UnsubscribeResponse &response,
                     int64_t timeout_ms = 5000);
 
                 // =================================================================
@@ -112,31 +111,31 @@ namespace humanoid_robot
                 /**
                  * Async send - returns immediately with a future
                  */
-                AsyncResult<interfaces::SendResponse> SendAsync(
-                    const interfaces::SendRequest &request,
-                    int64_t timeout_ms = 5000);
+                // AsyncResult<humanoid_robot::PB::interfaces::SendResponse> SendAsync(
+                //     const humanoid_robot::PB::interfaces::SendRequest &request,
+                //     int64_t timeout_ms = 5000);
 
-                /**
-                 * Async send with callback
-                 */
-                void SendAsync(
-                    const interfaces::SendRequest &request,
-                    AsyncCallback<interfaces::SendResponse> callback,
-                    int64_t timeout_ms = 5000);
+                // /**
+                //  * Async send with callback
+                //  */
+                // void SendAsync(
+                //     const humanoid_robot::PB::interfaces::SendRequest &request,
+                //     AsyncCallback<humanoid_robot::PB::interfaces::SendResponse> callback,
+                //     int64_t timeout_ms = 5000);
 
                 /**
                  * Async query - returns immediately with a future
                  */
-                AsyncResult<interfaces::QueryResponse> QueryAsync(
-                    const interfaces::QueryRequest &request,
+                AsyncResult<humanoid_robot::PB::interfaces::QueryResponse> QueryAsync(
+                    const humanoid_robot::PB::interfaces::QueryRequest &request,
                     int64_t timeout_ms = 5000);
 
                 /**
                  * Async query with callback
                  */
                 void QueryAsync(
-                    const interfaces::QueryRequest &request,
-                    AsyncCallback<interfaces::QueryResponse> callback,
+                    const humanoid_robot::PB::interfaces::QueryRequest &request,
+                    AsyncCallback<humanoid_robot::PB::interfaces::QueryResponse> callback,
                     int64_t timeout_ms = 5000);
 
                 // =================================================================
@@ -151,8 +150,8 @@ namespace humanoid_robot
                  * @return Status of the operation (returns when stream ends or errors)
                  */
                 Status Subscribe(
-                    const interfaces::SubscribeRequest &request,
-                    interfaces::SubscribeResponse &response,
+                    const humanoid_robot::PB::interfaces::SubscribeRequest &request,
+                    humanoid_robot::PB::interfaces::SubscribeResponse &response,
                     int64_t timeout_ms = 0);
 
                 // =================================================================

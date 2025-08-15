@@ -15,13 +15,14 @@
 
 using namespace humanoid_robot::clientSDK::robot;
 using namespace humanoid_robot::clientSDK::common;
+using namespace humanoid_robot::PB::interfaces;
 
 // Private implementation class
 class InterfacesClient::InterfacesClientImpl
 {
 public:
     std::shared_ptr<grpc::Channel> channel_;
-    std::unique_ptr<interfaces::InterfaceService::Stub> stub_;
+    std::unique_ptr<InterfaceService::Stub> stub_;
     std::string target_;
     bool connected_;
 
@@ -80,7 +81,7 @@ Status InterfacesClient::Connect(const std::string &target)
         }
 
         // Create service stub
-        pImpl_->stub_ = interfaces::InterfaceService::NewStub(pImpl_->channel_);
+        pImpl_->stub_ = InterfaceService::NewStub(pImpl_->channel_);
 
         if (!pImpl_->stub_)
         {
@@ -117,8 +118,7 @@ bool InterfacesClient::IsConnected() const
 // =================================================================
 
 Status InterfacesClient::Send(
-    const interfaces::SendRequest &request,
-    interfaces::SendResponse &response,
+    std::unique_ptr<::grpc::ClientReaderWriter<::humanoid_robot::PB::interfaces::SendRequest, ::humanoid_robot::PB::interfaces::SendResponse>> &readWriter,
     int64_t timeout_ms)
 {
     if (!IsConnected())
@@ -131,13 +131,13 @@ Status InterfacesClient::Send(
     grpc::ClientContext context;
     context.set_deadline(GetDeadline(timeout_ms));
 
-    grpc::Status status = pImpl_->stub_->Send(&context, request, &response);
-    return ConvertGrpcStatus(status);
+    readWriter = pImpl_->stub_->Send(&context);
+    return Status();
 }
 
 Status InterfacesClient::Query(
-    const interfaces::QueryRequest &request,
-    interfaces::QueryResponse &response,
+    const humanoid_robot::PB::interfaces::QueryRequest &request,
+    humanoid_robot::PB::interfaces::QueryResponse &response,
     int64_t timeout_ms)
 {
     if (!IsConnected())
@@ -155,8 +155,8 @@ Status InterfacesClient::Query(
 }
 
 Status InterfacesClient::Action(
-    const interfaces::ActionRequest &request,
-    std::unique_ptr<::grpc::ClientReader<::interfaces::ActionResponse>> &reader,
+    const humanoid_robot::PB::interfaces::ActionRequest &request,
+    std::unique_ptr<::grpc::ClientReader<::humanoid_robot::PB::interfaces::ActionResponse>> &reader,
     grpc::ClientContext &context)
 {
     if (!IsConnected())
@@ -179,8 +179,8 @@ Status InterfacesClient::Action(
 }
 
 Status InterfacesClient::Unsubscribe(
-    const interfaces::UnsubscribeRequest &request,
-    interfaces::UnsubscribeResponse &response,
+    const humanoid_robot::PB::interfaces::UnsubscribeRequest &request,
+    humanoid_robot::PB::interfaces::UnsubscribeResponse &response,
     int64_t timeout_ms)
 {
     if (!IsConnected())
@@ -201,58 +201,58 @@ Status InterfacesClient::Unsubscribe(
 // Asynchronous Methods (Future-based)
 // =================================================================
 
-AsyncResult<interfaces::SendResponse> InterfacesClient::SendAsync(
-    const interfaces::SendRequest &request,
+// AsyncResult<humanoid_robot::PB::interfaces::SendResponse> InterfacesClient::SendAsync(
+//     const humanoid_robot::PB::interfaces::SendRequest &request,
+//     int64_t timeout_ms)
+// {
+//     auto promise = std::make_shared<std::promise<Status>>();
+//     auto future = promise->get_future();
+
+//     SendAsync(request, [promise](const Status &status, const humanoid_robot::PB::interfaces::SendResponse &response)
+//               { promise->set_value(status); }, timeout_ms);
+
+//     return future;
+// }
+
+// void InterfacesClient::SendAsync(
+//     const humanoid_robot::PB::interfaces::SendRequest &request,
+//     AsyncCallback<humanoid_robot::PB::interfaces::SendResponse> callback,
+//     int64_t timeout_ms)
+// {
+//     std::weak_ptr<InterfacesClient> weak_self = shared_from_this();
+
+//     std::thread([weak_self, request, callback, timeout_ms]()
+//                 {
+//                 if (auto self = weak_self.lock()) {
+//                     SendResponse response;
+//                     auto status = self->Send(request, response, timeout_ms);
+//                     callback(status, response);
+//                 } else {
+//                     SendResponse response;
+//                     Status error_status(
+//                         std::make_error_code(std::errc::operation_canceled),
+//                         "Client object has been destroyed");
+//                     callback(error_status, response);
+//                 } })
+//         .detach();
+// }
+
+AsyncResult<humanoid_robot::PB::interfaces::QueryResponse> InterfacesClient::QueryAsync(
+    const humanoid_robot::PB::interfaces::QueryRequest &request,
     int64_t timeout_ms)
 {
     auto promise = std::make_shared<std::promise<Status>>();
     auto future = promise->get_future();
 
-    SendAsync(request, [promise](const Status &status, const interfaces::SendResponse &response)
-              { promise->set_value(status); }, timeout_ms);
-
-    return future;
-}
-
-void InterfacesClient::SendAsync(
-    const interfaces::SendRequest &request,
-    AsyncCallback<interfaces::SendResponse> callback,
-    int64_t timeout_ms)
-{
-    std::weak_ptr<InterfacesClient> weak_self = shared_from_this();
-
-    std::thread([weak_self, request, callback, timeout_ms]()
-                {
-                if (auto self = weak_self.lock()) {
-                    interfaces::SendResponse response;
-                    auto status = self->Send(request, response, timeout_ms);
-                    callback(status, response);
-                } else {
-                    interfaces::SendResponse response;
-                    Status error_status(
-                        std::make_error_code(std::errc::operation_canceled),
-                        "Client object has been destroyed");
-                    callback(error_status, response);
-                } })
-        .detach();
-}
-
-AsyncResult<interfaces::QueryResponse> InterfacesClient::QueryAsync(
-    const interfaces::QueryRequest &request,
-    int64_t timeout_ms)
-{
-    auto promise = std::make_shared<std::promise<Status>>();
-    auto future = promise->get_future();
-
-    QueryAsync(request, [promise](const Status &status, const interfaces::QueryResponse &response)
+    QueryAsync(request, [promise](const Status &status, const QueryResponse &response)
                { promise->set_value(status); }, timeout_ms);
 
     return future;
 }
 
 void InterfacesClient::QueryAsync(
-    const interfaces::QueryRequest &request,
-    AsyncCallback<interfaces::QueryResponse> callback,
+    const humanoid_robot::PB::interfaces::QueryRequest &request,
+    AsyncCallback<humanoid_robot::PB::interfaces::QueryResponse> callback,
     int64_t timeout_ms)
 {
     std::weak_ptr<InterfacesClient> weak_self = shared_from_this();
@@ -260,11 +260,11 @@ void InterfacesClient::QueryAsync(
     std::thread([weak_self, request, callback, timeout_ms]()
                 {
                 if (auto self = weak_self.lock()) {
-                    interfaces::QueryResponse response;
+                    QueryResponse response;
                     auto status = self->Query(request, response, timeout_ms);
                     callback(status, response);
                 } else {
-                    interfaces::QueryResponse response;
+                    QueryResponse response;
                     Status error_status(
                         std::make_error_code(std::errc::operation_canceled),
                         "Client object has been destroyed");
@@ -278,8 +278,8 @@ void InterfacesClient::QueryAsync(
 // =================================================================
 
 Status InterfacesClient::Subscribe(
-    const interfaces::SubscribeRequest &request,
-    interfaces::SubscribeResponse &response,
+    const humanoid_robot::PB::interfaces::SubscribeRequest &request,
+    humanoid_robot::PB::interfaces::SubscribeResponse &response,
     int64_t timeout_ms)
 {
     if (!IsConnected())

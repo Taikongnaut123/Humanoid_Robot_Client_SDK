@@ -119,6 +119,7 @@ bool InterfacesClient::IsConnected() const
 
 Status InterfacesClient::Send(
     std::unique_ptr<::grpc::ClientReaderWriter<::humanoid_robot::PB::interfaces::SendRequest, ::humanoid_robot::PB::interfaces::SendResponse>> &readWriter,
+    std::unique_ptr<grpc::ClientContext> &context,
     int64_t timeout_ms)
 {
     if (!IsConnected())
@@ -128,10 +129,15 @@ Status InterfacesClient::Send(
             "Client not connected");
     }
 
-    grpc::ClientContext context;
-    context.set_deadline(GetDeadline(timeout_ms));
+    // Allocate context on heap and pass ownership to caller
+    context = std::make_unique<grpc::ClientContext>();
+    context->set_deadline(GetDeadline(timeout_ms));
 
-    readWriter = pImpl_->stub_->Send(&context);
+    readWriter = pImpl_->stub_->Send(context.get());
+    if (!readWriter)
+    {
+        return Status(std::make_error_code(std::errc::io_error), "Failed to create send stream");
+    }
     return Status();
 }
 

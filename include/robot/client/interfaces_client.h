@@ -66,6 +66,7 @@ namespace humanoid_robot
                  */
                 Status Send(
                     std::unique_ptr<::grpc::ClientReaderWriter<::humanoid_robot::PB::interfaces::SendRequest, ::humanoid_robot::PB::interfaces::SendResponse>> &readWriter,
+                    std::unique_ptr<grpc::ClientContext> &context,
                     int64_t timeout_ms = 5000);
 
                 /**

@@ -62,7 +62,199 @@ static void TestDetectionService(InterfacesClient &client)
             Variant data;
             auto dataMap = data.mutable_dictvalue()->mutable_keyvaluelist();
 
-            const std::string img_path = "../../../../perception_pipeline_cpp/test/frame.jpg"; // 相对于 build/bin/linux_x64/debug
+            const std::string img_path = "/home/ubuntu/zhaokai/vs_workspace/Humanoid-Robot/perception_pipeline_cpp/test/frame.jpg"; // 相对于 build/bin/linux_x64/debug
+            std::ifstream ifs(img_path, std::ios::binary);
+            if (ifs)
+            {
+                std::string content((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+                {
+                    Variant var;
+                    var.set_bytevalue(content); // 将图片二进制放入 Variant.byteValue
+                    dataMap->insert(std::make_pair(std::string("image"), var));
+                }
+
+                {
+                    Variant var;
+                    var.set_int32value(content.size()); // 将图片大小放入 Variant.int32Value
+                    dataMap->insert(std::make_pair(std::string("image_size"), var));
+                    std::cout << "Image size: " << content.size() << " bytes" << std::endl;
+                }
+            }
+            else
+            {
+                // 回退到占位符字符串，且打印警告
+                Variant var;
+                var.set_stringvalue("test_image_data_detection");
+                dataMap->insert(std::make_pair(std::string("image_bytes"), var));
+                std::cerr << "Warning: failed to open image: " << img_path << " - using placeholder string" << std::endl;
+            }
+
+            input_map->insert(std::make_pair(std::string("data"), data));
+        }
+        // params
+        auto params_map = send_req.mutable_params()->mutable_keyvaluelist();
+        {
+            Variant var;
+            var.set_doublevalue(0.5);
+            params_map->insert(std::make_pair(std::string("confidence_threshold"), var));
+        }
+
+        std::unique_ptr<::grpc::ClientReaderWriter<SendRequest, SendResponse>> stream;
+        std::unique_ptr<grpc::ClientContext> context;
+        auto status = client.Send(stream, context, 10000);
+        if (!status)
+        {
+            std::cerr << "Failed to create stream: " << status.message() << std::endl;
+            return;
+        }
+
+        if (!stream->Write(send_req))
+        {
+            std::cerr << "Failed to write request" << std::endl;
+            stream->WritesDone();
+            stream->Finish();
+            return;
+        }
+
+        if (stream->Read(&send_resp))
+        {
+            std::cout << "[✓] Detection response successful" << std::endl;
+            print_keyvaluelist(send_resp.output().keyvaluelist());
+        }
+        else
+        {
+            std::cerr << "[✗] No response received" << std::endl;
+        }
+
+        stream->WritesDone();
+        auto finish_status = stream->Finish();
+        std::cout << "Stream finished: " << (finish_status.ok() ? "ok" : "error") << std::endl;
+        // context will be destroyed when unique_ptr goes out of scope
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception in detection test: " << e.what() << std::endl;
+    }
+}
+
+static void TestSegmentationService(InterfacesClient &client)
+{
+    std::cout << "\n--- Testing Segmentation Service ---" << std::endl;
+    // TODO: Implement segmentation service test
+    try
+    {
+        SendRequest send_req;
+        SendResponse send_resp;
+
+        // Set command ID and input
+        auto input_map = send_req.mutable_input()->mutable_keyvaluelist();
+        {
+            Variant var;
+            var.set_int32value(20003); // GET_SEGMENTATION_RESULT
+            input_map->insert(std::make_pair(std::string("commandID"), var));
+        }
+        // Simulated image (read bytes from perception_pipeline_cpp/test/frame.jpg)
+        {
+            Variant data;
+            auto dataMap = data.mutable_dictvalue()->mutable_keyvaluelist();
+
+            const std::string img_path = "/home/ubuntu/zhaokai/vs_workspace/Humanoid-Robot/perception_pipeline_cpp/test/frame.jpg"; // 相对于 build/bin/linux_x64/debug
+            std::ifstream ifs(img_path, std::ios::binary);
+            if (ifs)
+            {
+                std::string content((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+                {
+                    Variant var;
+                    var.set_bytevalue(content); // 将图片二进制放入 Variant.byteValue
+                    dataMap->insert(std::make_pair(std::string("image"), var));
+                }
+
+                {
+                    Variant var;
+                    var.set_int32value(content.size()); // 将图片大小放入 Variant.int32Value
+                    dataMap->insert(std::make_pair(std::string("image_size"), var));
+                    std::cout << "Image size: " << content.size() << " bytes" << std::endl;
+                }
+            }
+            else
+            {
+                // 回退到占位符字符串，且打印警告
+                Variant var;
+                var.set_stringvalue("test_image_data_detection");
+                dataMap->insert(std::make_pair(std::string("image_bytes"), var));
+                std::cerr << "Warning: failed to open image: " << img_path << " - using placeholder string" << std::endl;
+            }
+
+            input_map->insert(std::make_pair(std::string("data"), data));
+        }
+        // params
+        auto params_map = send_req.mutable_params()->mutable_keyvaluelist();
+        {
+            Variant var;
+            var.set_doublevalue(0.5);
+            params_map->insert(std::make_pair(std::string("confidence_threshold"), var));
+        }
+
+        std::unique_ptr<::grpc::ClientReaderWriter<SendRequest, SendResponse>> stream;
+        std::unique_ptr<grpc::ClientContext> context;
+        auto status = client.Send(stream, context, 10000);
+        if (!status)
+        {
+            std::cerr << "Failed to create stream: " << status.message() << std::endl;
+            return;
+        }
+
+        if (!stream->Write(send_req))
+        {
+            std::cerr << "Failed to write request" << std::endl;
+            stream->WritesDone();
+            stream->Finish();
+            return;
+        }
+
+        if (stream->Read(&send_resp))
+        {
+            std::cout << "[✓] Detection response successful" << std::endl;
+            print_keyvaluelist(send_resp.output().keyvaluelist());
+        }
+        else
+        {
+            std::cerr << "[✗] No response received" << std::endl;
+        }
+
+        stream->WritesDone();
+        auto finish_status = stream->Finish();
+        std::cout << "Stream finished: " << (finish_status.ok() ? "ok" : "error") << std::endl;
+        // context will be destroyed when unique_ptr goes out of scope
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception in detection test: " << e.what() << std::endl;
+    }
+}
+
+static void TestPerceptionService(InterfacesClient &client)
+{
+    std::cout << "\n--- Testing Perception Service ---" << std::endl;
+    // TODO: Implement perception service test
+    try
+    {
+        SendRequest send_req;
+        SendResponse send_resp;
+
+        // Set command ID and input
+        auto input_map = send_req.mutable_input()->mutable_keyvaluelist();
+        {
+            Variant var;
+            var.set_int32value(20001); // GET_PERCEPTION_RESULT
+            input_map->insert(std::make_pair(std::string("commandID"), var));
+        }
+        // Simulated image (read bytes from perception_pipeline_cpp/test/frame.jpg)
+        {
+            Variant data;
+            auto dataMap = data.mutable_dictvalue()->mutable_keyvaluelist();
+
+            const std::string img_path = "/home/ubuntu/zhaokai/vs_workspace/Humanoid-Robot/perception_pipeline_cpp/test/frame.jpg"; // 相对于 build/bin/linux_x64/debug
             std::ifstream ifs(img_path, std::ios::binary);
             if (ifs)
             {
@@ -153,7 +345,9 @@ int main()
         std::cout << "[✓] Connected to Interfaces-Server at localhost:50051" << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-        TestDetectionService(*client);
+        // TestDetectionService(*client);
+        // TestSegmentationService(*client);
+        TestPerceptionService(*client);
 
         std::cout << "\n=== Simple test completed ===" << std::endl;
     }

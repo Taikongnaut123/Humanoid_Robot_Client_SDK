@@ -200,7 +200,7 @@ static void TestSegmentationService(InterfacesClient &client)
         auto status = client.Send(stream, context, 10000);
         if (!status)
         {
-            std::cerr << "Failed to create stream: " << status.message() << std::endl;
+            std::cerr << "Failed to create Segmentation stream: " << status.message() << std::endl;
             return;
         }
 
@@ -214,22 +214,22 @@ static void TestSegmentationService(InterfacesClient &client)
 
         if (stream->Read(&send_resp))
         {
-            std::cout << "[✓] Detection response successful" << std::endl;
+            std::cout << "[✓] Segmentation response successful" << std::endl;
             print_keyvaluelist(send_resp.output().keyvaluelist());
         }
         else
         {
-            std::cerr << "[✗] No response received" << std::endl;
+            std::cerr << "[✗] No Segmentation response received" << std::endl;
         }
 
         stream->WritesDone();
         auto finish_status = stream->Finish();
-        std::cout << "Stream finished: " << (finish_status.ok() ? "ok" : "error") << std::endl;
+        std::cout << "Segmentation Stream finished: " << (finish_status.ok() ? "ok" : "error") << std::endl;
         // context will be destroyed when unique_ptr goes out of scope
     }
     catch (const std::exception &e)
     {
-        std::cerr << "Exception in detection test: " << e.what() << std::endl;
+        std::cerr << "Exception in segmentation test: " << e.what() << std::endl;
     }
 }
 
@@ -310,22 +310,22 @@ static void TestPerceptionService(InterfacesClient &client)
 
         if (stream->Read(&send_resp))
         {
-            std::cout << "[✓] Detection response successful" << std::endl;
+            std::cout << "[✓] Perception response successful" << std::endl;
             print_keyvaluelist(send_resp.output().keyvaluelist());
         }
         else
         {
-            std::cerr << "[✗] No response received" << std::endl;
+            std::cerr << "[✗] No Perception response received" << std::endl;
         }
 
         stream->WritesDone();
         auto finish_status = stream->Finish();
-        std::cout << "Stream finished: " << (finish_status.ok() ? "ok" : "error") << std::endl;
+        std::cout << "Perception Stream finished: " << (finish_status.ok() ? "ok" : "error") << std::endl;
         // context will be destroyed when unique_ptr goes out of scope
     }
     catch (const std::exception &e)
     {
-        std::cerr << "Exception in detection test: " << e.what() << std::endl;
+        std::cerr << "Exception in perception test: " << e.what() << std::endl;
     }
 }
 
@@ -345,8 +345,8 @@ int main()
         std::cout << "[✓] Connected to Interfaces-Server at localhost:50051" << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-        // TestDetectionService(*client);
-        // TestSegmentationService(*client);
+        TestDetectionService(*client);
+        TestSegmentationService(*client);
         TestPerceptionService(*client);
 
         std::cout << "\n=== Simple test completed ===" << std::endl;

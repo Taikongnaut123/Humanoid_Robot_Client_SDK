@@ -30,15 +30,15 @@ include(GNUInstallDirs)
 
 # 安装头文件
 install(DIRECTORY include/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        DESTINATION ${CHRIC_TERMINAL_FOLDER}/include
         FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
 
 # 安装文档
 install(FILES 
         README.md
         DESIGN_DOCUMENT.md
-        DESTINATION ${CMAKE_INSTALL_DOCDIR})
+        DESTINATION ${CHRIC_TERMINAL_FOLDER})
 
 # 安装示例
 install(FILES example/interfaces_client_example.cpp
-        DESTINATION ${CMAKE_INSTALL_DOCDIR}/examples)
+        DESTINATION ${CHRIC_TERMINAL_FOLDER}/examples)

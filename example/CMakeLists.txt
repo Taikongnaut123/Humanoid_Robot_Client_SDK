@@ -1,7 +1,9 @@
 # Client-SDK Example CMakeLists.txt
 cmake_minimum_required(VERSION 3.8)
 
-project(ClientSDKExamples LANGUAGES CXX)
+set(TARGET_NAME CHRIC_ClientSDK_Examples)
+
+project(${TARGET_NAME} LANGUAGES CXX)
 
 # 设置 C++ 标准
 set(CMAKE_CXX_STANDARD 17)
@@ -24,14 +26,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${OUTPUT_BIN_DIR})
 
 message(STATUS "Client-SDK Examples output directory: ${OUTPUT_BIN_DIR}")
 
-# 包含目录
-include_directories(
-    ${CLIENT_SDK_ROOT_INCLUDE_DIR}
-    ${PB_INCLUDE_DIR}
-    ${Protobuf_INCLUDE_DIRS}
-    ${PB_UTILS_INCLUDE_DIR}
-)
-
 # 查找所有示例源文件
 file(GLOB EXAMPLE_SOURCES "*.cpp")
 
@@ -40,6 +34,7 @@ foreach(EXAMPLE_SOURCE ${EXAMPLE_SOURCES})
     # 获取文件名（不含扩展名）
     get_filename_component(EXAMPLE_NAME ${EXAMPLE_SOURCE} NAME_WE)
     
+    set(EXAMPLE_NAME "CHRIC_${EXAMPLE_NAME}")
     # 创建可执行文件
     add_executable(${EXAMPLE_NAME} ${EXAMPLE_SOURCE})
     
@@ -50,22 +45,24 @@ foreach(EXAMPLE_SOURCE ${EXAMPLE_SOURCES})
         RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_BIN_DIR}
     )
     
-    # 链接库
-    target_link_libraries(${EXAMPLE_NAME}
-    PUBLIC
-        robot_client
-        robot_common
-        libinterfacesPB
-        libcommonPB
-        libPBUtils
-        protobuf::libprotobuf
-        gRPC::grpc++
-    PRIVATE
-        CHRIC_Common_Log
+    # 设置包含目录
+    target_include_directories(${EXAMPLE_NAME} PRIVATE
+        ${CLIENT_SDK_ROOT_INCLUDE_DIR}
+        ${PB_INCLUDE_DIR}
+        ${PB_UTILS_INCLUDE_DIR}
     )
     
-    # 添加依赖关系
-    add_dependencies(${EXAMPLE_NAME} robot_client robot_common libinterfacesPB libcommonPB libPBUtils) 
+    # 链接库
+    target_link_libraries(${EXAMPLE_NAME} PRIVATE
+        CHRIC_ClientSDK
+        CHRIC_CommonLog
+        CHRIC_PBUtils
+        CHRIC_robotCommon
+        libinterfacesPB
+        libcommonPB
+        protobuf::libprotobuf
+        gRPC::grpc++
+    ) 
     
     message(STATUS "Created example: ${EXAMPLE_NAME}")
 endforeach()

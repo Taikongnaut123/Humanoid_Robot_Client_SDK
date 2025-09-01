@@ -30,6 +30,8 @@ set_target_properties(${TARGET_NAME}
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
     PUBLIC_HEADER "interfaces_client.h;client_callback_server.h"
+    LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_BIN_DIR}
+    ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_BIN_DIR}
     RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_BIN_DIR})
 
 target_include_directories(
@@ -41,9 +43,11 @@ target_include_directories(
 
 # 链接必要的库
 target_link_libraries(${TARGET_NAME}
-    PUBLIC
+    PRIVATE
     libinterfacesPB
     libcommonPB
     protobuf::libprotobuf
     gRPC::grpc++
+    gRPC::grpc++_reflection
 )
+

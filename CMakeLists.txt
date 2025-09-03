@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.8)
 
 project(HumanoidRobotSDK VERSION 1.0.0 LANGUAGES CXX)
 
+option(BUILD_SDK_CLIENT_EXAMPLES ON)
+
 # 设置Client-SDK项目公共变量
 set(CLIENT_SDK_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH "Root path of the Client SDK project")
 set(CLIENT_SDK_ROOT_INCLUDE_DIR "${CLIENT_SDK_ROOT_PATH}/include" CACHE PATH "Path to the Client SDK include files")
@@ -23,7 +25,10 @@ set(HUMANOID_ROBOT_SDK_VERSION "${HUMANOID_ROBOT_SDK_VERSION_MAJOR}.${HUMANOID_R
 
 # 添加子目录
 add_subdirectory(source)
-add_subdirectory(example)
+
+if(BUILD_SDK_CLIENT_EXAMPLES)
+        add_subdirectory(example)
+endif()
 
 # 配置安装目标
 include(GNUInstallDirs)

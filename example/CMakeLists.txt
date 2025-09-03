@@ -24,7 +24,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_BIN_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${OUTPUT_BIN_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${OUTPUT_BIN_DIR})
 
-message(STATUS "Client-SDK Examples output directory: ${OUTPUT_BIN_DIR}")
+message(DEBUG "SDK-Client Examples output directory: ${OUTPUT_BIN_DIR}")
 
 # 创建可执行文件
 add_executable(${TARGET_NAME}

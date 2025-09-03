@@ -12,18 +12,10 @@ find_package(PkgConfig REQUIRED)
 find_package(Protobuf CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 
-# 集成 vcpkg
-# 根目录已集成无需再设置
-# if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)  
-#     set(CMAKE_TOOLCHAIN_FILE "/home/ubuntu/vcpkg/scripts/buildsystems/vcpkg.cmake")
-# endif()
-
 add_library(${TARGET_NAME} SHARED
     interfaces_client.cpp
     client_callback_server.cpp)
     
-message(CLIENT_SDK_COMMON_INCLUDE_DIR: ${CLIENT_SDK_COMMON_INCLUDE_DIR})
-
 set_target_properties(${TARGET_NAME}
     PROPERTIES
     OUTPUT_NAME "${TARGET_NAME}"

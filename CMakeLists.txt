@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.8)
 
 project(HumanoidRobotSDK VERSION 1.0.0 LANGUAGES CXX)
 
-option(BUILD_SDK_CLIENT_EXAMPLES ON)
+# 使用CACHE方式定义选项，确保在子目录中也能正常工作
+set(BUILD_SDK_CLIENT_EXAMPLES ON CACHE BOOL "Build SDK Client examples")
+message(DEBUG "Building SDK-Client examples: ${BUILD_SDK_CLIENT_EXAMPLES}")
 
 # 设置Client-SDK项目公共变量
 set(CLIENT_SDK_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH "Root path of the Client SDK project")
@@ -27,6 +29,7 @@ set(HUMANOID_ROBOT_SDK_VERSION "${HUMANOID_ROBOT_SDK_VERSION_MAJOR}.${HUMANOID_R
 add_subdirectory(source)
 
 if(BUILD_SDK_CLIENT_EXAMPLES)
+        message(DEBUG "Adding SDK-Client examples subdirectory...")
         add_subdirectory(example)
 endif()
 

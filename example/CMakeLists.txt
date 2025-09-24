@@ -51,8 +51,8 @@ target_link_libraries(${TARGET_NAME} PRIVATE
     CHRIC_CommonLog
     CHRIC_PBUtils
     CHRIC_robotCommon
-    libinterfacesPB
-    libcommonPB
+    libCHRIC_interfacesPB
+    libCHRIC_commonPB
     protobuf::libprotobuf
     gRPC::grpc++
 ) 

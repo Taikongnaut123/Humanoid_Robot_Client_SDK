@@ -36,8 +36,8 @@ target_include_directories(
 # 链接必要的库
 target_link_libraries(${TARGET_NAME}
     PRIVATE
-    libinterfacesPB
-    libcommonPB
+    libCHRIC_interfacesPB
+    libCHRIC_commonPB
     protobuf::libprotobuf
     gRPC::grpc++
     gRPC::grpc++_reflection

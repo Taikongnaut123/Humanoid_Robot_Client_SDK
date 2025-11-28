@@ -33,20 +33,20 @@ if(BUILD_SDK_CLIENT_EXAMPLES)
         add_subdirectory(example)
 endif()
 
-# 配置安装目标
+# 配置安装目标 - 安装到 CHRIC_TERMINAL_FOLDER
 include(GNUInstallDirs)
 
-# 安装头文件
+# 安装头文件到 chric_terminal/sdk_client/include
 install(DIRECTORY include/
-        DESTINATION ${CHRIC_TERMINAL_FOLDER}/include
+        DESTINATION ${CHRIC_TERMINAL_FOLDER}/sdk_client/include
         FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
 
-# 安装文档
+# 安装文档到 chric_terminal/sdk_client/
 install(FILES 
         README.md
         DESIGN_DOCUMENT.md
-        DESTINATION ${CHRIC_TERMINAL_FOLDER})
+        DESTINATION ${CHRIC_TERMINAL_FOLDER}/sdk_client/docs)
 
-# 安装示例
+# 安装示例到 chric_terminal/sdk_client/examples
 install(FILES example/interfaces_client_example.cpp
-        DESTINATION ${CHRIC_TERMINAL_FOLDER}/examples)
+        DESTINATION ${CHRIC_TERMINAL_FOLDER}/sdk_client/examples)

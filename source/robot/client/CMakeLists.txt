@@ -43,3 +43,9 @@ target_link_libraries(${TARGET_NAME}
     gRPC::grpc++_reflection
 )
 
+# 安装库文件到 chric_terminal/sdk_client/lib
+install(TARGETS ${TARGET_NAME}
+    LIBRARY DESTINATION ${CHRIC_TERMINAL_FOLDER}/sdk_client/lib
+    ARCHIVE DESTINATION ${CHRIC_TERMINAL_FOLDER}/sdk_client/lib
+    RUNTIME DESTINATION ${CHRIC_TERMINAL_FOLDER}/sdk_client/bin
+)

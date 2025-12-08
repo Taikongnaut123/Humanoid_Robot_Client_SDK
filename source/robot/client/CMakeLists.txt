@@ -8,9 +8,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 查找依赖
-find_package(PkgConfig REQUIRED)
-find_package(Protobuf CONFIG REQUIRED)
-find_package(gRPC CONFIG REQUIRED)
+# find_package(PkgConfig REQUIRED)
+# find_package(protobuf CONFIG REQUIRED)
+# find_package(gRPC CONFIG REQUIRED)
 
 add_library(${TARGET_NAME} SHARED
     interfaces_client.cpp
@@ -43,9 +43,8 @@ target_link_libraries(${TARGET_NAME}
     gRPC::grpc++_reflection
 )
 
-# 安装库文件到 chric_terminal/sdk_client/lib
 install(TARGETS ${TARGET_NAME}
-    LIBRARY DESTINATION ${CHRIC_TERMINAL_FOLDER}/sdk_client/lib
-    ARCHIVE DESTINATION ${CHRIC_TERMINAL_FOLDER}/sdk_client/lib
-    RUNTIME DESTINATION ${CHRIC_TERMINAL_FOLDER}/sdk_client/bin
-)
+    LIBRARY DESTINATION ${CHRIC_TERMINAL_FOLDER}/lib
+    ARCHIVE DESTINATION ${CHRIC_TERMINAL_FOLDER}/lib
+    RUNTIME DESTINATION ${CHRIC_TERMINAL_FOLDER}/bin
+    )

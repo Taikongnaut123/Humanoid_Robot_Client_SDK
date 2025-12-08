@@ -49,4 +49,7 @@ install(FILES
 
 # 安装示例到 chric_terminal/sdk_client/examples
 install(FILES example/interfaces_client_example.cpp
-        DESTINATION ${CHRIC_TERMINAL_FOLDER}/sdk_client/examples)
+        DESTINATION ${CHRIC_TERMINAL_FOLDER}/examples)
+
+install(FILES example/navgation_client_example.cpp
+        DESTINATION ${CHRIC_TERMINAL_FOLDER}/examples)

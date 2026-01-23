@@ -24,32 +24,29 @@ set(HUMANOID_ROBOT_SDK_VERSION_MAJOR 1)
 set(HUMANOID_ROBOT_SDK_VERSION_MINOR 0)
 set(HUMANOID_ROBOT_SDK_VERSION_PATCH 0)
 set(HUMANOID_ROBOT_SDK_VERSION "${HUMANOID_ROBOT_SDK_VERSION_MAJOR}.${HUMANOID_ROBOT_SDK_VERSION_MINOR}.${HUMANOID_ROBOT_SDK_VERSION_PATCH}")
-
+if(NOT CHRIC_TERMINAL_FOLDER)
+    set(CHRIC_TERMINAL_FOLDER "chric_terminal")
+endif()
 # 添加子目录
 add_subdirectory(source)
-
-if(BUILD_SDK_CLIENT_EXAMPLES)
-        message(DEBUG "Adding SDK-Client examples subdirectory...")
-        add_subdirectory(example)
-endif()
 
 # 配置安装目标 - 安装到 CHRIC_TERMINAL_FOLDER
 include(GNUInstallDirs)
 
-# 安装头文件到 chric_terminal/sdk_client/include
+# 安装头文件到 chric_terminal/konka_sdk_client/include
 install(DIRECTORY include/
-        DESTINATION ${CHRIC_TERMINAL_FOLDER}/sdk_client/include
+        DESTINATION ${CHRIC_TERMINAL_FOLDER}/konka_sdk_client/include
         FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
 
-# 安装文档到 chric_terminal/sdk_client/
-install(FILES 
-        README.md
-        DESIGN_DOCUMENT.md
-        DESTINATION ${CHRIC_TERMINAL_FOLDER}/sdk_client/docs)
+# # 安装文档到 chric_terminal/sdk_client/
+# install(FILES 
+#         README.md
+#         DESIGN_DOCUMENT.md
+#         DESTINATION ${CHRIC_TERMINAL_FOLDER}/sdk_client/docs)
 
-# 安装示例到 chric_terminal/sdk_client/examples
-install(FILES example/interfaces_client_example.cpp
-        DESTINATION ${CHRIC_TERMINAL_FOLDER}/examples)
+# # 安装示例到 chric_terminal/sdk_client/examples
+# install(FILES example/interfaces_client_example.cpp
+#         DESTINATION ${CHRIC_TERMINAL_FOLDER}/examples)
 
-install(FILES example/navgation_client_example.cpp
-        DESTINATION ${CHRIC_TERMINAL_FOLDER}/examples)
+# install(FILES example/navgation_client_example.cpp
+#         DESTINATION ${CHRIC_TERMINAL_FOLDER}/examples)

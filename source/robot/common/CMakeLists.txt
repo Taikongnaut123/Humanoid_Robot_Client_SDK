@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 
-set(TARGET_NAME CHRIC_robotCommon)
+set(TARGET_NAME "chric_konka_sdk_common")
 
 project(${TARGET_NAME} VERSION 1.0.0.0 DESCRIPTION "Client SDK - Robot Common Library" LANGUAGES CXX)
 # 设置 C++ 标准
@@ -24,7 +24,9 @@ set_target_properties(${TARGET_NAME}
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
     PUBLIC_HEADER "status.h;success_condition.h"
-    RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_BIN_DIR})
+    LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_BIN_DIR}/konka_sdk_client/lib
+    ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_BIN_DIR}/konka_sdk_client/lib
+    RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_BIN_DIR}/konka_sdk_client/bin)
 
 target_include_directories(
     ${TARGET_NAME}
@@ -33,8 +35,8 @@ target_include_directories(
 )
 
 install(TARGETS ${TARGET_NAME}
-    LIBRARY DESTINATION ${CHRIC_TERMINAL_FOLDER}/lib
-    ARCHIVE DESTINATION ${CHRIC_TERMINAL_FOLDER}/lib
-    RUNTIME DESTINATION ${CHRIC_TERMINAL_FOLDER}/bin
+    LIBRARY DESTINATION ${CHRIC_TERMINAL_FOLDER}/konka_sdk_client/lib
+    ARCHIVE DESTINATION ${CHRIC_TERMINAL_FOLDER}/konka_sdk_client/lib
+    RUNTIME DESTINATION ${CHRIC_TERMINAL_FOLDER}/konka_sdk_client/bin
     # PUBLIC_HEADER DESTINATION ${CHRIC_TERMINAL_FOLDER}/include/robot/common
     )

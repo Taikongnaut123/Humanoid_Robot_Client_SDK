@@ -56,30 +56,24 @@ NavigationResStatus GetCurrentPose(std::unique_ptr<InterfacesClient>& client,
     {
       Variant command_id;
       command_id.set_int32value(
-          NavigationCommandCode::kGetCurrentPose);  // GET_CURRENT_POSE
+          NavigationCommandCode::kGetCurrentPose);
       input_map->insert(std::make_pair(std::string("command_id"), command_id));
     }
-    // Simulated data (empty for GET_CURRENT_POSE)
     {
+      Variant request_dict;
+      auto request_dict_map = request_dict.mutable_dictvalue()->mutable_keyvaluelist();
       Variant request_params;
       std::string serialize_data;
-      auto serialize_status = google::protobuf::util::MessageToJsonString(
-          request_pose_msg, &serialize_data, humanoid_robot::clientSDK::common::GetJsonPrintOptions());
-      if (!serialize_status.ok()) {
+
+      auto serialize_status = request_pose_msg.SerializeToString(&serialize_data);
+      if (!serialize_status) {
         std::cerr << "Failed to serialize ReqPoseMsg" << std::endl;
         return NavigationResStatus::ERROR_PARSE_FAILED;
       }
-      request_params.set_stringvalue(serialize_data);
-      input_map->insert(std::make_pair(std::string("data"), request_params));
+      request_params.set_bytevalue(serialize_data);
+      request_dict_map->insert(std::make_pair(std::string("pose_request"), request_params));
+      input_map->insert(std::make_pair(std::string("data"), request_dict));
     }
-    // // params
-    // auto params_map = send_req.mutable_params()->mutable_keyvaluelist();
-    // {
-    //   Variant var;
-    //   var.set_doublevalue(0.5);
-    //   params_map->insert(
-    //       std::make_pair(std::string("confidence_threshold"), var));
-    // }
 
     std::unique_ptr<::grpc::ClientReaderWriter<SendRequest, SendResponse>>
         stream;
@@ -99,11 +93,6 @@ NavigationResStatus GetCurrentPose(std::unique_ptr<InterfacesClient>& client,
     }
 
     if (stream->Read(&send_resp)) {
-      std::cout << "[✓] Navigation response successful" << std::endl;
-      std::cout << "[✓] Navigation response ret: " << send_resp.ret().code()
-                << std::endl;
-      std::cout << "[✓] Navigation response ret: " << send_resp.ret().message()
-                << std::endl;
       auto response_status = send_resp.ret();
       res_status =
           static_cast<NavigationResStatus>(std::stoi(response_status.code()));
@@ -115,15 +104,11 @@ NavigationResStatus GetCurrentPose(std::unique_ptr<InterfacesClient>& client,
         return res_status;
       }
       const Variant& data_var = data_it->second;
-      // google::protobuf::util::JsonParseOptions options;
-      // options.ignore_unknown_fields = true;  //
-      // 忽略Proto中不存在的字段（容错）
-      auto parse_status = google::protobuf::util::JsonStringToMessage(
-          data_var.stringvalue(), &current_pose, humanoid_robot::clientSDK::common::GetJsonParseOptions());
 
-      // 错误处理
-      if (!parse_status.ok()) {
-        std::cerr << "反序列化失败" << std::endl;
+      auto unserialize_status = current_pose.ParseFromString(data_var.bytevalue());
+      if (!unserialize_status) {
+        std::cerr << "Failed to serialize ReqPoseMsg" << std::endl;
+        return NavigationResStatus::ERROR_PARSE_FAILED;
       }
 
     } else {
@@ -133,8 +118,6 @@ NavigationResStatus GetCurrentPose(std::unique_ptr<InterfacesClient>& client,
 
     stream->WritesDone();
     auto finish_status = stream->Finish();
-    std::cout << "Navigation Stream finished: "
-              << (finish_status.ok() ? "ok" : "error") << std::endl;
     return res_status;
     // context will be destroyed when unique_ptr goes out of scope
   } catch (const std::exception& e) {

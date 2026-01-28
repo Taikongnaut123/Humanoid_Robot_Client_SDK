@@ -27,11 +27,11 @@ using SendResponse = humanoid_robot::PB::interfaces::SendResponse;
 using NavigationCommandCode =
     humanoid_robot::PB::sdk_service::common::NavigationCommandCode;
 
-NavigationResStatus GetCurrentPose(std::unique_ptr<InterfacesClient>& client,
-                                   const ReqPoseMsg& request_pose_msg,
-                                   Pose& current_pose);
-}  // namespace navigation_api
-}  // namespace robot
-}  // namespace clientSDK
-}  // namespace humanoid_robot
-#endif  // HUMANOID_ROBOT_INTERFACES_NAVIGATIONAPI
+NavigationResStatus GetCurrentPose(std::unique_ptr<InterfacesClient> &client,
+                                   const ReqPoseMsg &request_pose_msg,
+                                   Pose &current_pose);
+} // namespace navigation_api
+} // namespace robot
+} // namespace clientSDK
+} // namespace humanoid_robot
+#endif // HUMANOID_ROBOT_INTERFACES_NAVIGATIONAPI

@@ -7,52 +7,47 @@
 #include <string>
 #include <system_error>
 
-namespace humanoid_robot
-{
-    namespace clientSDK
-    {
-        namespace common
-        {
-            class [[nodiscard]] Status
-            {
-            public:
-                Status() = default;
+namespace humanoid_robot {
+namespace clientSDK {
+namespace common {
+class [[nodiscard]] Status {
+public:
+  Status() = default;
 
-                ~Status() = default;
+  ~Status() = default;
 
-                Status(const std::error_code &code, std::string message = "");
+  Status(const std::error_code &code, std::string message = "");
 
-                operator bool() const;
+  operator bool() const;
 
-                std::error_code code() const { return m_code; }
+  std::error_code code() const { return m_code; }
 
-                // Check if this matches a certain error enum.
-                template <typename ENUM>
-                bool Is() const
-                {
-                    static_assert(std::is_error_code_enum<ENUM>::value,
-                                  "Must check against an error code enum");
-                    return std::error_code(ENUM{}).category() == m_code.category();
-                }
+  // Check if this matches a certain error enum.
+  template <typename ENUM> bool Is() const {
+    static_assert(std::is_error_code_enum<ENUM>::value,
+                  "Must check against an error code enum");
+    return std::error_code(ENUM{}).category() == m_code.category();
+  }
 
-                const std::string &message() const { return m_message; }
+  const std::string &message() const { return m_message; }
 
-                // Extend a ::bosdyn::common::Status with a new message.
-                ::humanoid_robot::clientSDK::common::Status Chain(std::string message) const;
+  // Extend a ::bosdyn::common::Status with a new message.
+  ::humanoid_robot::clientSDK::common::Status Chain(std::string message) const;
 
-                // Transform a ::bosdyn::common::Status into a new code.
-                ::humanoid_robot::clientSDK::common::Status Chain(std::error_code code, std::string message) const;
+  // Transform a ::bosdyn::common::Status into a new code.
+  ::humanoid_robot::clientSDK::common::Status Chain(std::error_code code,
+                                                    std::string message) const;
 
-                std::string DebugString() const;
+  std::string DebugString() const;
 
-                // Used to explicitly ignore any error present to silence nodiscard warnings.
-                inline void IgnoreError() const {}
+  // Used to explicitly ignore any error present to silence nodiscard warnings.
+  inline void IgnoreError() const {}
 
-            private:
-                std::error_code m_code;
-                std::string m_message;
-            };
-        } // namespace common
-    } // namespace clientSDK
+private:
+  std::error_code m_code;
+  std::string m_message;
+};
+} // namespace common
+} // namespace clientSDK
 } // namespace humanoid_robot
 #endif // HUMANOID_ROBOT_COMMON_STATUS_H

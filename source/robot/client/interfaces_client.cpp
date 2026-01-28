@@ -21,7 +21,7 @@ using namespace humanoid_robot::PB::interfaces;
 
 // Private implementation class
 class InterfacesClient::InterfacesClientImpl {
- public:
+public:
   std::shared_ptr<grpc::Channel> channel_;
   std::unique_ptr<InterfaceService::Stub> stub_;
   std::string target_;
@@ -49,18 +49,18 @@ InterfacesClient::~InterfacesClient() = default;
 // Connection Management
 // =================================================================
 
-Status InterfacesClient::Connect(const std::string& server_address, int port) {
+Status InterfacesClient::Connect(const std::string &server_address, int port) {
   std::string target = server_address + ":" + std::to_string(port);
   return Connect(target);
 }
 
-Status InterfacesClient::Connect(const std::string& target) {
+Status InterfacesClient::Connect(const std::string &target) {
   try {
     pImpl_->target_ = target;
 
     // Create gRPC channel with default credentials
     grpc::ChannelArguments args;
-    args.SetMaxReceiveMessageSize(100 * 1024 * 1024);  // 100MB max message size
+    args.SetMaxReceiveMessageSize(100 * 1024 * 1024); // 100MB max message size
     args.SetMaxSendMessageSize(100 * 1024 * 1024);
 
     pImpl_->channel_ = grpc::CreateCustomChannel(
@@ -87,7 +87,7 @@ Status InterfacesClient::Connect(const std::string& target) {
     }
 
     return Status();
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     return Status(std::make_error_code(std::errc::connection_refused),
                   std::string("Connection failed: ") + e.what());
   }
@@ -110,8 +110,8 @@ bool InterfacesClient::IsConnected() const {
 Status InterfacesClient::Send(
     std::unique_ptr<::grpc::ClientReaderWriter<
         ::humanoid_robot::PB::interfaces::SendRequest,
-        ::humanoid_robot::PB::interfaces::SendResponse>>& readWriter,
-    std::unique_ptr<grpc::ClientContext>& context, int64_t timeout_ms) {
+        ::humanoid_robot::PB::interfaces::SendResponse>> &readWriter,
+    std::unique_ptr<grpc::ClientContext> &context, int64_t timeout_ms) {
   if (!IsConnected()) {
     return Status(std::make_error_code(std::errc::not_connected),
                   "Client not connected");
@@ -130,8 +130,8 @@ Status InterfacesClient::Send(
 }
 
 Status InterfacesClient::Query(
-    const humanoid_robot::PB::interfaces::QueryRequest& request,
-    humanoid_robot::PB::interfaces::QueryResponse& response,
+    const humanoid_robot::PB::interfaces::QueryRequest &request,
+    humanoid_robot::PB::interfaces::QueryResponse &response,
     int64_t timeout_ms) {
   if (!IsConnected()) {
     return Status(std::make_error_code(std::errc::not_connected),
@@ -146,11 +146,11 @@ Status InterfacesClient::Query(
 }
 
 Status InterfacesClient::Action(
-    const humanoid_robot::PB::interfaces::ActionRequest& request,
+    const humanoid_robot::PB::interfaces::ActionRequest &request,
     std::unique_ptr<
-        ::grpc::ClientReader<::humanoid_robot::PB::interfaces::ActionResponse>>&
-        reader,
-    grpc::ClientContext& context) {
+        ::grpc::ClientReader<::humanoid_robot::PB::interfaces::ActionResponse>>
+        &reader,
+    grpc::ClientContext &context) {
   if (!IsConnected()) {
     return Status(std::make_error_code(std::errc::not_connected),
                   "Client not connected");
@@ -163,12 +163,12 @@ Status InterfacesClient::Action(
                   "Failed to create action stream");
   }
 
-  return Status();  // 成功
+  return Status(); // 成功
 }
 
 Status InterfacesClient::Unsubscribe(
-    const humanoid_robot::PB::interfaces::UnsubscribeRequest& request,
-    humanoid_robot::PB::interfaces::UnsubscribeResponse& response,
+    const humanoid_robot::PB::interfaces::UnsubscribeRequest &request,
+    humanoid_robot::PB::interfaces::UnsubscribeResponse &response,
     int64_t timeout_ms) {
   if (!IsConnected()) {
     return Status(std::make_error_code(std::errc::not_connected),
@@ -227,14 +227,14 @@ Status InterfacesClient::Unsubscribe(
 
 AsyncResult<humanoid_robot::PB::interfaces::QueryResponse>
 InterfacesClient::QueryAsync(
-    const humanoid_robot::PB::interfaces::QueryRequest& request,
+    const humanoid_robot::PB::interfaces::QueryRequest &request,
     int64_t timeout_ms) {
   auto promise = std::make_shared<std::promise<Status>>();
   auto future = promise->get_future();
 
   QueryAsync(
       request,
-      [promise](const Status& status, const QueryResponse& response) {
+      [promise](const Status &status, const QueryResponse &response) {
         promise->set_value(status);
       },
       timeout_ms);
@@ -243,7 +243,7 @@ InterfacesClient::QueryAsync(
 }
 
 void InterfacesClient::QueryAsync(
-    const humanoid_robot::PB::interfaces::QueryRequest& request,
+    const humanoid_robot::PB::interfaces::QueryRequest &request,
     AsyncCallback<humanoid_robot::PB::interfaces::QueryResponse> callback,
     int64_t timeout_ms) {
   std::weak_ptr<InterfacesClient> weak_self = shared_from_this();
@@ -267,8 +267,8 @@ void InterfacesClient::QueryAsync(
 // =================================================================
 
 Status InterfacesClient::Subscribe(
-    const humanoid_robot::PB::interfaces::SubscribeRequest& request,
-    humanoid_robot::PB::interfaces::SubscribeResponse& response,
+    const humanoid_robot::PB::interfaces::SubscribeRequest &request,
+    humanoid_robot::PB::interfaces::SubscribeResponse &response,
     int64_t timeout_ms) {
   if (!IsConnected()) {
     return Status(std::make_error_code(std::errc::not_connected),
@@ -306,10 +306,11 @@ bool InterfacesClient::WaitForChannelReady(int64_t timeout_ms) {
   while (state != GRPC_CHANNEL_READY &&
          std::chrono::system_clock::now() < deadline) {
     state = pImpl_->channel_->GetState(false);
-    
+
     // print remaining time in seconds
     std::cout << "Wait for channel ready, remaining time: "
-              << int((deadline - std::chrono::system_clock::now()).count() / 1e9)
+              << int((deadline - std::chrono::system_clock::now()).count() /
+                     1e9)
               << " s" << std::endl;
     // sleep 1 s
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -322,44 +323,44 @@ bool InterfacesClient::WaitForChannelReady(int64_t timeout_ms) {
 // Private Helper Methods
 // =================================================================
 
-Status InterfacesClient::ConvertGrpcStatus(const grpc::Status& grpc_status) {
+Status InterfacesClient::ConvertGrpcStatus(const grpc::Status &grpc_status) {
   if (grpc_status.ok()) {
     return Status();
   }
 
   std::error_code ec;
   switch (grpc_status.error_code()) {
-    case grpc::StatusCode::CANCELLED:
-      ec = std::make_error_code(std::errc::operation_canceled);
-      break;
-    case grpc::StatusCode::DEADLINE_EXCEEDED:
-      ec = std::make_error_code(std::errc::timed_out);
-      break;
-    case grpc::StatusCode::NOT_FOUND:
-      ec = std::make_error_code(std::errc::no_such_file_or_directory);
-      break;
-    case grpc::StatusCode::ALREADY_EXISTS:
-      ec = std::make_error_code(std::errc::file_exists);
-      break;
-    case grpc::StatusCode::PERMISSION_DENIED:
-      ec = std::make_error_code(std::errc::permission_denied);
-      break;
-    case grpc::StatusCode::UNAVAILABLE:
-      ec = std::make_error_code(std::errc::host_unreachable);
-      break;
-    case grpc::StatusCode::UNIMPLEMENTED:
-      ec = std::make_error_code(std::errc::function_not_supported);
-      break;
-    default:
-      ec = std::make_error_code(std::errc::io_error);
-      break;
+  case grpc::StatusCode::CANCELLED:
+    ec = std::make_error_code(std::errc::operation_canceled);
+    break;
+  case grpc::StatusCode::DEADLINE_EXCEEDED:
+    ec = std::make_error_code(std::errc::timed_out);
+    break;
+  case grpc::StatusCode::NOT_FOUND:
+    ec = std::make_error_code(std::errc::no_such_file_or_directory);
+    break;
+  case grpc::StatusCode::ALREADY_EXISTS:
+    ec = std::make_error_code(std::errc::file_exists);
+    break;
+  case grpc::StatusCode::PERMISSION_DENIED:
+    ec = std::make_error_code(std::errc::permission_denied);
+    break;
+  case grpc::StatusCode::UNAVAILABLE:
+    ec = std::make_error_code(std::errc::host_unreachable);
+    break;
+  case grpc::StatusCode::UNIMPLEMENTED:
+    ec = std::make_error_code(std::errc::function_not_supported);
+    break;
+  default:
+    ec = std::make_error_code(std::errc::io_error);
+    break;
   }
 
   return Status(ec, grpc_status.error_message());
 }
 
-std::chrono::system_clock::time_point InterfacesClient::GetDeadline(
-    int64_t timeout_ms) {
+std::chrono::system_clock::time_point
+InterfacesClient::GetDeadline(int64_t timeout_ms) {
   return std::chrono::system_clock::now() +
          std::chrono::milliseconds(timeout_ms);
 }
@@ -371,19 +372,19 @@ std::chrono::system_clock::time_point InterfacesClient::GetDeadline(
 // Factory functions implementation
 namespace humanoid_robot::clientSDK::factory {
 // Preferred shared_ptr versions for async safety
-Status CreateInterfacesClient(
-    const std::string& server_address, int port,
-    std::shared_ptr<robot::InterfacesClient>& client) {
+Status
+CreateInterfacesClient(const std::string &server_address, int port,
+                       std::shared_ptr<robot::InterfacesClient> &client) {
   client =
       std::shared_ptr<robot::InterfacesClient>(new robot::InterfacesClient());
   return client->Connect(server_address, port);
 }
 
-Status CreateInterfacesClient(
-    const std::string& target,
-    std::shared_ptr<robot::InterfacesClient>& client) {
+Status
+CreateInterfacesClient(const std::string &target,
+                       std::shared_ptr<robot::InterfacesClient> &client) {
   client =
       std::shared_ptr<robot::InterfacesClient>(new robot::InterfacesClient());
   return client->Connect(target);
 }
-}  // namespace humanoid_robot::clientSDK::factory
+} // namespace humanoid_robot::clientSDK::factory

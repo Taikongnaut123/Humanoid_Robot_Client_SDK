@@ -17,7 +17,6 @@
 #include "sdk_service/navigation/res_start_nav.pb.h"
 #include "sdk_service/navigation/res_status.pb.h"
 
-
 #include "robot/common/json_convert_util.hpp"
 
 namespace humanoid_robot {
@@ -40,10 +39,9 @@ using NavigationCommandCode =
 
 using Variant = humanoid_robot::PB::common::Variant;
 
-
-NavigationResStatus GetCurrentPose(std::unique_ptr<InterfacesClient>& client,
-                                   const ReqPoseMsg& request_pose_msg,
-                                   Pose& current_pose) {
+NavigationResStatus GetCurrentPose(std::unique_ptr<InterfacesClient> &client,
+                                   const ReqPoseMsg &request_pose_msg,
+                                   Pose &current_pose) {
   NavigationResStatus res_status;
   res_status = NavigationResStatus::ERROR_DATA_GET_FAILED;
 
@@ -55,23 +53,25 @@ NavigationResStatus GetCurrentPose(std::unique_ptr<InterfacesClient>& client,
     auto input_map = send_req.mutable_input()->mutable_keyvaluelist();
     {
       Variant command_id;
-      command_id.set_int32value(
-          NavigationCommandCode::kGetCurrentPose);
+      command_id.set_int32value(NavigationCommandCode::kGetCurrentPose);
       input_map->insert(std::make_pair(std::string("command_id"), command_id));
     }
     {
       Variant request_dict;
-      auto request_dict_map = request_dict.mutable_dictvalue()->mutable_keyvaluelist();
+      auto request_dict_map =
+          request_dict.mutable_dictvalue()->mutable_keyvaluelist();
       Variant request_params;
       std::string serialize_data;
 
-      auto serialize_status = request_pose_msg.SerializeToString(&serialize_data);
+      auto serialize_status =
+          request_pose_msg.SerializeToString(&serialize_data);
       if (!serialize_status) {
         std::cerr << "Failed to serialize ReqPoseMsg" << std::endl;
         return NavigationResStatus::ERROR_PARSE_FAILED;
       }
       request_params.set_bytevalue(serialize_data);
-      request_dict_map->insert(std::make_pair(std::string("pose_request"), request_params));
+      request_dict_map->insert(
+          std::make_pair(std::string("pose_request"), request_params));
       input_map->insert(std::make_pair(std::string("data"), request_dict));
     }
 
@@ -103,9 +103,10 @@ NavigationResStatus GetCurrentPose(std::unique_ptr<InterfacesClient>& client,
         std::cerr << "Failed to find data in response" << std::endl;
         return res_status;
       }
-      const Variant& data_var = data_it->second;
+      const Variant &data_var = data_it->second;
 
-      auto unserialize_status = current_pose.ParseFromString(data_var.bytevalue());
+      auto unserialize_status =
+          current_pose.ParseFromString(data_var.bytevalue());
       if (!unserialize_status) {
         std::cerr << "Failed to serialize ReqPoseMsg" << std::endl;
         return NavigationResStatus::ERROR_PARSE_FAILED;
@@ -120,12 +121,12 @@ NavigationResStatus GetCurrentPose(std::unique_ptr<InterfacesClient>& client,
     auto finish_status = stream->Finish();
     return res_status;
     // context will be destroyed when unique_ptr goes out of scope
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << "Exception in navigation test: " << e.what() << std::endl;
     return res_status;
   }
 }
-}  // namespace navigation_api
-}  // namespace robot
-}  // namespace clientSDK
-}  // namespace humanoid_robot
+} // namespace navigation_api
+} // namespace robot
+} // namespace clientSDK
+} // namespace humanoid_robot

@@ -26,11 +26,10 @@ namespace robot {
 using Status = humanoid_robot::clientSDK::common::Status;
 
 // Forward declarations for async operation results
-template <typename T>
-using AsyncResult = std::future<Status>;
+template <typename T> using AsyncResult = std::future<Status>;
 
 template <typename T>
-using AsyncCallback = std::function<void(const Status&, const T&)>;
+using AsyncCallback = std::function<void(const Status &, const T &)>;
 
 /**
  * InterfacesClient - gRPC client for InterfaceService
@@ -39,14 +38,14 @@ using AsyncCallback = std::function<void(const Status&, const T&)>;
  * InterfaceService operations defined in interfaces_grpc.proto
  */
 class InterfacesClient : public std::enable_shared_from_this<InterfacesClient> {
- public:
+public:
   // Constructor and destructor
   InterfacesClient();
   ~InterfacesClient();
 
   // Connection management
-  Status Connect(const std::string& server_address, int port);
-  Status Connect(const std::string& target);
+  Status Connect(const std::string &server_address, int port);
+  Status Connect(const std::string &target);
   void Disconnect();
   bool IsConnected() const;
 
@@ -63,8 +62,8 @@ class InterfacesClient : public std::enable_shared_from_this<InterfacesClient> {
    */
   Status Send(std::unique_ptr<::grpc::ClientReaderWriter<
                   ::humanoid_robot::PB::interfaces::SendRequest,
-                  ::humanoid_robot::PB::interfaces::SendResponse>>& readWriter,
-              std::unique_ptr<grpc::ClientContext>& context,
+                  ::humanoid_robot::PB::interfaces::SendResponse>> &readWriter,
+              std::unique_ptr<grpc::ClientContext> &context,
               int64_t timeout_ms = 5000);
 
   /**
@@ -74,8 +73,8 @@ class InterfacesClient : public std::enable_shared_from_this<InterfacesClient> {
    * @param timeout_ms Timeout in milliseconds (default: 5000)
    * @return Status of the operation
    */
-  Status Query(const humanoid_robot::PB::interfaces::QueryRequest& request,
-               humanoid_robot::PB::interfaces::QueryResponse& response,
+  Status Query(const humanoid_robot::PB::interfaces::QueryRequest &request,
+               humanoid_robot::PB::interfaces::QueryResponse &response,
                int64_t timeout_ms = 5000);
 
   /**
@@ -86,10 +85,10 @@ class InterfacesClient : public std::enable_shared_from_this<InterfacesClient> {
    * lifetime)
    * @return Status of the operation
    */
-  Status Action(const humanoid_robot::PB::interfaces::ActionRequest& request,
+  Status Action(const humanoid_robot::PB::interfaces::ActionRequest &request,
                 std::unique_ptr<::grpc::ClientReader<
-                    ::humanoid_robot::PB::interfaces::ActionResponse>>& reader,
-                grpc::ClientContext& context);
+                    ::humanoid_robot::PB::interfaces::ActionResponse>> &reader,
+                grpc::ClientContext &context);
 
   /**
    * Unsubscribe from a subscription
@@ -98,10 +97,10 @@ class InterfacesClient : public std::enable_shared_from_this<InterfacesClient> {
    * @param timeout_ms Timeout in milliseconds (default: 5000)
    * @return Status of the operation
    */
-  Status Unsubscribe(
-      const humanoid_robot::PB::interfaces::UnsubscribeRequest& request,
-      humanoid_robot::PB::interfaces::UnsubscribeResponse& response,
-      int64_t timeout_ms = 5000);
+  Status
+  Unsubscribe(const humanoid_robot::PB::interfaces::UnsubscribeRequest &request,
+              humanoid_robot::PB::interfaces::UnsubscribeResponse &response,
+              int64_t timeout_ms = 5000);
 
   // =================================================================
   // Asynchronous Methods
@@ -125,15 +124,15 @@ class InterfacesClient : public std::enable_shared_from_this<InterfacesClient> {
   /**
    * Async query - returns immediately with a future
    */
-  AsyncResult<humanoid_robot::PB::interfaces::QueryResponse> QueryAsync(
-      const humanoid_robot::PB::interfaces::QueryRequest& request,
-      int64_t timeout_ms = 5000);
+  AsyncResult<humanoid_robot::PB::interfaces::QueryResponse>
+  QueryAsync(const humanoid_robot::PB::interfaces::QueryRequest &request,
+             int64_t timeout_ms = 5000);
 
   /**
    * Async query with callback
    */
   void QueryAsync(
-      const humanoid_robot::PB::interfaces::QueryRequest& request,
+      const humanoid_robot::PB::interfaces::QueryRequest &request,
       AsyncCallback<humanoid_robot::PB::interfaces::QueryResponse> callback,
       int64_t timeout_ms = 5000);
 
@@ -148,10 +147,10 @@ class InterfacesClient : public std::enable_shared_from_this<InterfacesClient> {
    * @param timeout_ms Timeout for the subscription (0 = no timeout)
    * @return Status of the operation (returns when stream ends or errors)
    */
-  Status Subscribe(
-      const humanoid_robot::PB::interfaces::SubscribeRequest& request,
-      humanoid_robot::PB::interfaces::SubscribeResponse& response,
-      int64_t timeout_ms = 0);
+  Status
+  Subscribe(const humanoid_robot::PB::interfaces::SubscribeRequest &request,
+            humanoid_robot::PB::interfaces::SubscribeResponse &response,
+            int64_t timeout_ms = 0);
 
   // =================================================================
   // Utility Methods
@@ -169,17 +168,17 @@ class InterfacesClient : public std::enable_shared_from_this<InterfacesClient> {
    */
   bool WaitForChannelReady(int64_t timeout_ms = 5000);
 
- private:
+private:
   // Private implementation details
   class InterfacesClientImpl;
   std::unique_ptr<InterfacesClientImpl> pImpl_;
 
   // Disable copy and assignment
-  InterfacesClient(const InterfacesClient&) = delete;
-  InterfacesClient& operator=(const InterfacesClient&) = delete;
+  InterfacesClient(const InterfacesClient &) = delete;
+  InterfacesClient &operator=(const InterfacesClient &) = delete;
 
   // Helper methods
-  Status ConvertGrpcStatus(const grpc::Status& grpc_status);
+  Status ConvertGrpcStatus(const grpc::Status &grpc_status);
   std::chrono::system_clock::time_point GetDeadline(int64_t timeout_ms);
 };
 
@@ -194,10 +193,10 @@ class InterfacesClient : public std::enable_shared_from_this<InterfacesClient> {
  * @param client Output client instance
  * @return Status of the connection
  */
-Status CreateInterfacesClientLegacy(const std::string& server_address, int port,
-                                    std::unique_ptr<InterfacesClient>& client);
+Status CreateInterfacesClientLegacy(const std::string &server_address, int port,
+                                    std::unique_ptr<InterfacesClient> &client);
 
-}  // namespace robot
+} // namespace robot
 
 // Factory functions for creating clients
 namespace factory {
@@ -209,8 +208,8 @@ using Status = humanoid_robot::clientSDK::common::Status;
  * @param client Output client instance (shared_ptr for async safety)
  * @return Status of the connection
  */
-Status CreateInterfacesClient(const std::string& server_address, int port,
-                              std::shared_ptr<robot::InterfacesClient>& client);
+Status CreateInterfacesClient(const std::string &server_address, int port,
+                              std::shared_ptr<robot::InterfacesClient> &client);
 
 /**
  * Create a quick interfaces client with target string (推荐用于异步操作)
@@ -218,10 +217,10 @@ Status CreateInterfacesClient(const std::string& server_address, int port,
  * @param client Output client instance (shared_ptr for async safety)
  * @return Status of the connection
  */
-Status CreateInterfacesClient(const std::string& target,
-                              std::shared_ptr<robot::InterfacesClient>& client);
-}  // namespace factory
-}  // namespace clientSDK
-}  // namespace humanoid_robot
+Status CreateInterfacesClient(const std::string &target,
+                              std::shared_ptr<robot::InterfacesClient> &client);
+} // namespace factory
+} // namespace clientSDK
+} // namespace humanoid_robot
 
-#endif  // HUMANOID_ROBOT_INTERFACES_CLIENT_H
+#endif // HUMANOID_ROBOT_INTERFACES_CLIENT_H

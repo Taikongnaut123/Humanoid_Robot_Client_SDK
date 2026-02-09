@@ -1,4 +1,4 @@
-#include "robot/modules/control/control_api.h"
+#include "robot/modules/control_api.h"
 
 #include <iostream>
 #include <string>
@@ -13,17 +13,17 @@
 #include "robot/common/json_convert_util.hpp"
 
 namespace humanoid_robot {
-namespace clientSDK {
+namespace konka_sdk {
 namespace robot {
 namespace control_api {
 
 using Variant = humanoid_robot::PB::common::Variant;
-using ControlResStatus = humanoid_robot::PB::sdk_service::control::ResponceStatus;
+using ControlResStatus = humanoid_robot::PB::sdk_service::control::ResponseStatus;
 
 ControlResStatus EmergencyStop(
     std::unique_ptr<InterfacesClient>& client,
     const RequestEmergencyStop& request_emergency_stop,
-    ResponceEmergencyStop& response_emergency_stop) {
+    ResponseEmergencyStop& response_emergency_stop) {
     
     ControlResStatus res_status = ControlResStatus::ERROR_DATA_GET_FAILED;
     SendRequest send_req;
@@ -123,7 +123,7 @@ ControlResStatus EmergencyStop(
 ControlResStatus GetJointInfo(
     std::unique_ptr<InterfacesClient>& client,
     const RequestGetJointInfo& request_get_joint_info,
-    ResponceGetJointInfo& response_get_joint_info) {
+    ResponseGetJointInfo& response_get_joint_info) {
     
     ControlResStatus res_status = ControlResStatus::ERROR_DATA_GET_FAILED;
     SendRequest send_req;
@@ -202,7 +202,7 @@ ControlResStatus GetJointInfo(
 ControlResStatus JointMotion(
     std::unique_ptr<InterfacesClient>& client,
     const RequestJointMotion& request_joint_motion,
-    ResponceJointMotion& response_joint_motion) {
+    ResponseJointMotion& response_joint_motion) {
     
     ControlResStatus res_status = ControlResStatus::ERROR_DATA_GET_FAILED;
     SendRequest send_req;
@@ -281,5 +281,5 @@ ControlResStatus JointMotion(
 
 }  // namespace control_api
 }  // namespace robot
-}  // namespace clientSDK
+}  // namespace konka_sdk
 }  // namespace humanoid_robot

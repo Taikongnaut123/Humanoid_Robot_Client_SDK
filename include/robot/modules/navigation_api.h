@@ -18,7 +18,7 @@
 #include "sdk_service/navigation/request_charging.pb.h"
 
 namespace humanoid_robot {
-namespace clientSDK {
+namespace konka_sdk {
 namespace robot {
 namespace navigation_api {
 using ReqPoseMsg = humanoid_robot::PB::sdk_service::navigation::ReqPoseMsg;
@@ -28,7 +28,7 @@ using NavigationResStatus =
 using Pose = humanoid_robot::PB::ros2::geometry_msgs::Pose;
 
 using GoalStatus = humanoid_robot::PB::ros2::action_msgs::GoalStatus;
-using InterfacesClient = humanoid_robot::clientSDK::robot::InterfacesClient;
+using InterfacesClient = humanoid_robot::konka_sdk::robot::InterfacesClient;
 
 using SendRequest = humanoid_robot::PB::interfaces::SendRequest;
 using SendResponse = humanoid_robot::PB::interfaces::SendResponse;
@@ -89,6 +89,6 @@ NavigationResStatus StopChargingTask(std::unique_ptr<InterfacesClient>& client,
 
 }  // namespace navigation_api
 }  // namespace robot
-}  // namespace clientSDK
+}  // namespace konka_sdk
 }  // namespace humanoid_robot
 #endif  // HUMANOID_ROBOT_INTERFACES_NAVIGATIONAPI

@@ -1,11 +1,11 @@
-#ifndef HUMANOID_ROBOT_JSON_CONVERT_UTIL_HPP_
-#define HUMANOID_ROBOT_JSON_CONVERT_UTIL_HPP_
+#ifndef HUMANOID_ROBOT_JSON_CONVERT_UTIL_HPP
+#define HUMANOID_ROBOT_JSON_CONVERT_UTIL_HPP
 
 #include "google/protobuf/util/json_util.h"
 namespace humanoid_robot {
-namespace clientSDK {
+namespace konka_sdk {
 namespace common {
-const google::protobuf::util::JsonPrintOptions &GetJsonPrintOptions() {
+inline const google::protobuf::util::JsonPrintOptions &GetJsonPrintOptions() {
   static const google::protobuf::util::JsonPrintOptions json_print_options =
       []() {
         google::protobuf::util::JsonPrintOptions options;
@@ -21,7 +21,7 @@ const google::protobuf::util::JsonPrintOptions &GetJsonPrintOptions() {
   return json_print_options;
 }
 
-const google::protobuf::util::JsonParseOptions &GetJsonParseOptions() {
+inline const google::protobuf::util::JsonParseOptions &GetJsonParseOptions() {
   static const google::protobuf::util::JsonParseOptions json_parse_options =
       []() {
         google::protobuf::util::JsonParseOptions options;
@@ -31,7 +31,7 @@ const google::protobuf::util::JsonParseOptions &GetJsonParseOptions() {
   return json_parse_options;
 }
 } // namespace common
-} // namespace clientSDK
+} // namespace konka_sdk
 } // namespace humanoid_robot
 
 #endif

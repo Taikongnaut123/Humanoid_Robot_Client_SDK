@@ -1,10 +1,10 @@
 #ifndef HUMANOID_ROBOT_ERROR_CODE_H
 #define HUMANOID_ROBOT_ERROR_CODE_H
 #include "marco.h"
-using namespace humanoid_robot::clientSDK::common;
+using namespace humanoid_robot::konka_sdk::common;
 
 namespace humanoid_robot {
-namespace clientSDK {
+namespace konka_sdk {
 namespace common {
 constexpr error_t SUCCESS = 0;
 
@@ -16,6 +16,6 @@ constexpr error_t INTERFACE_CONNECT_FAILED = INTERFACE_NET_BASE - 1;
 constexpr error_t INTERFACE_SEND_FAILED = INTERFACE_NET_BASE - 2;
 
 } // namespace common
-} // namespace clientSDK
+} // namespace konka_sdk
 } // namespace humanoid_robot
 #endif // HUMANOID_ROBOT_ERROR_CODE_H

@@ -5,7 +5,7 @@
  */
 
 #include "robot/client/client_callback_server.h"
-#include "robot/common/errorCode.h"
+#include "robot/common/error_code.h"
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
@@ -14,8 +14,8 @@
 #include <iostream>
 #include <sstream>
 
-using namespace humanoid_robot::clientSDK::robot;
-using namespace humanoid_robot::clientSDK::common;
+using namespace humanoid_robot::konka_sdk::robot;
+using namespace humanoid_robot::konka_sdk::common;
 using namespace humanoid_robot::PB::interfaces;
 
 // =============================================================================
@@ -239,7 +239,7 @@ std::string ClientCallbackServer::GetClientEndpoint() const {
 // =============================================================================
 
 namespace humanoid_robot {
-namespace clientSDK {
+namespace konka_sdk {
 namespace robot {
 std::unique_ptr<ClientCallbackServer>
 CreateCallbackServer(const std::string &listen_address, Status &status,
@@ -262,5 +262,5 @@ CreateCallbackServer(const std::string &listen_address, Status &status,
   return server;
 }
 } // namespace robot
-} // namespace clientSDK
+} // namespace konka_sdk
 } // namespace humanoid_robot

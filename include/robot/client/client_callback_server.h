@@ -17,10 +17,10 @@
 #include "robot/common/status.h"
 #include <grpcpp/grpcpp.h>
 
-using humanoid_robot::clientSDK::common::Status;
+using humanoid_robot::konka_sdk::common::Status;
 
 namespace humanoid_robot {
-namespace clientSDK {
+namespace konka_sdk {
 namespace robot {
 // 回调函数类型定义
 using SubscriptionMessageCallback =
@@ -126,7 +126,7 @@ CreateCallbackServer(const std::string &listen_address, Status &status,
                      SubscriptionMessageCallback message_callback = nullptr);
 
 } // namespace robot
-} // namespace clientSDK
+} // namespace konka_sdk
 } // namespace humanoid_robot
 
 #endif // HUMANOID_ROBOT_CLIENT_CALLBACK_SERVER_H

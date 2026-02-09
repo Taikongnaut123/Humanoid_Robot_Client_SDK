@@ -22,7 +22,7 @@ Client-SDK/
 │   │   └── client_callback_server.h     # 回调服务器接口
 │   ├── common/
 │   │   ├── status.h                     # 状态类定义
-│   │   ├── errorCode.h                  # 错误码定义
+│   │   ├── error_code.h                  # 错误码定义
 │   │   ├── marco.h                      # 宏定义
 │   │   └── success_condition.h          # 成功条件定义
 │   └── v1/                              # 版本1接口（预留）
@@ -96,7 +96,7 @@ Client-SDK 提供以下核心功能：
 ```cpp
 #include "robot/client/interfaces_client.h"
 
-using namespace humanoid_robot::clientSDK::robot;
+using namespace humanoid_robot::konka_sdk::robot;
 
 // 方法1: 使用便捷函数（返回unique_ptr）
 std::unique_ptr<InterfacesClient> client;
@@ -104,7 +104,7 @@ auto status = CreateInterfacesClientLegacy("localhost", 50051, client);
 
 // 方法2: 使用工厂函数（返回shared_ptr，推荐用于异步操作）
 std::shared_ptr<InterfacesClient> shared_client;
-auto status2 = humanoid_robot::clientSDK::factory::CreateInterfacesClient("localhost", 50051, shared_client);
+auto status2 = humanoid_robot::konka_sdk::factory::CreateInterfacesClient("localhost", 50051, shared_client);
 
 // 方法3: 手动创建和连接
 auto manual_client = std::make_unique<InterfacesClient>();
@@ -335,7 +335,7 @@ if (status) {
 
 // Callback-based 异步调用 - 推荐方式，可以获取响应数据
 client->SendAsync(request, 
-    [](const humanoid_robot::clientSDK::common::Status& status, const interfaces::SendResponse& response) {
+    [](const humanoid_robot::konka_sdk::common::Status& status, const interfaces::SendResponse& response) {
         if (status) {
             std::cout << "Async send succeeded!" << std::endl;
             
@@ -411,7 +411,7 @@ if (status) {
 ```cpp
 #include "robot/client/client_callback_server.h"
 
-using namespace humanoid_robot::clientSDK::robot;
+using namespace humanoid_robot::konka_sdk::robot;
 
 // 使用工厂函数创建并启动回调服务器
 auto callback_server = std::make_unique<ClientCallbackServer>();
@@ -453,7 +453,7 @@ std::cout << "Callback server started at: " << callback_server->GetClientEndpoin
 #include "robot/client/interfaces_client.h"
 #include "robot/client/client_callback_server.h"
 
-using namespace humanoid_robot::clientSDK::robot;
+using namespace humanoid_robot::konka_sdk::robot;
 
 // 第一步：创建并启动回调服务器
 auto callback_server = std::make_unique<ClientCallbackServer>();
@@ -629,20 +629,20 @@ std::pair<std::unique_ptr<ClientCallbackServer>, Status> CreateCallbackServer(
 
 ```cpp
 // Legacy 便捷函数（返回 unique_ptr）
-humanoid_robot::clientSDK::common::Status CreateInterfacesClientLegacy(
+humanoid_robot::konka_sdk::common::Status CreateInterfacesClientLegacy(
     const std::string& server_address,
     int port,
     std::unique_ptr<InterfacesClient>& client
 );
 
 // 工厂函数（返回 shared_ptr，推荐用于异步操作）
-humanoid_robot::clientSDK::factory::CreateInterfacesClient(
+humanoid_robot::konka_sdk::factory::CreateInterfacesClient(
     const std::string& server_address,
     int port,
     std::shared_ptr<robot::InterfacesClient>& client
 );
 
-humanoid_robot::clientSDK::factory::CreateInterfacesClient(
+humanoid_robot::konka_sdk::factory::CreateInterfacesClient(
     const std::string& target,
     std::shared_ptr<robot::InterfacesClient>& client
 );

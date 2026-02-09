@@ -8,7 +8,7 @@
 #include <system_error>
 
 namespace humanoid_robot {
-namespace clientSDK {
+namespace konka_sdk {
 namespace common {
 class [[nodiscard]] Status {
 public:
@@ -32,10 +32,10 @@ public:
   const std::string &message() const { return m_message; }
 
   // Extend a ::bosdyn::common::Status with a new message.
-  ::humanoid_robot::clientSDK::common::Status Chain(std::string message) const;
+  ::humanoid_robot::konka_sdk::common::Status Chain(std::string message) const;
 
   // Transform a ::bosdyn::common::Status into a new code.
-  ::humanoid_robot::clientSDK::common::Status Chain(std::error_code code,
+  ::humanoid_robot::konka_sdk::common::Status Chain(std::error_code code,
                                                     std::string message) const;
 
   std::string DebugString() const;
@@ -48,6 +48,6 @@ private:
   std::string m_message;
 };
 } // namespace common
-} // namespace clientSDK
+} // namespace konka_sdk
 } // namespace humanoid_robot
 #endif // HUMANOID_ROBOT_COMMON_STATUS_H

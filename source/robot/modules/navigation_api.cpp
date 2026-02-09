@@ -25,7 +25,7 @@
 #include "sdk_service/navigation/res_status.pb.h"
 
 namespace humanoid_robot {
-namespace clientSDK {
+namespace konka_sdk {
 namespace robot {
 namespace navigation_api {
 
@@ -59,7 +59,7 @@ using NavigationResStatus =
 using Variant = humanoid_robot::PB::common::Variant;
 using SendRequest = humanoid_robot::PB::interfaces::SendRequest;
 using SendResponse = humanoid_robot::PB::interfaces::SendResponse;
-using InterfacesClient = humanoid_robot::clientSDK::robot::InterfacesClient;
+using InterfacesClient = humanoid_robot::konka_sdk::robot::InterfacesClient;
 
 // 业务数据类型别名
 using ReqPoseMsg = humanoid_robot::PB::sdk_service::navigation::ReqPoseMsg;
@@ -312,5 +312,5 @@ NavigationResStatus StopChargingTask(std::unique_ptr<InterfacesClient>& client,
 
 }  // namespace navigation_api
 }  // namespace robot
-}  // namespace clientSDK
+}  // namespace konka_sdk
 }  // namespace humanoid_robot

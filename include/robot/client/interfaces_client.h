@@ -21,9 +21,9 @@
 #include "robot/common/status.h"
 
 namespace humanoid_robot {
-namespace clientSDK {
+namespace konka_sdk {
 namespace robot {
-using Status = humanoid_robot::clientSDK::common::Status;
+using Status = humanoid_robot::konka_sdk::common::Status;
 
 // Forward declarations for async operation results
 template <typename T> using AsyncResult = std::future<Status>;
@@ -200,7 +200,7 @@ Status CreateInterfacesClientLegacy(const std::string &server_address, int port,
 
 // Factory functions for creating clients
 namespace factory {
-using Status = humanoid_robot::clientSDK::common::Status;
+using Status = humanoid_robot::konka_sdk::common::Status;
 /**
  * Create and connect interfaces client (推荐用于异步操作)
  * @param server_address Server address (e.g., "localhost")
@@ -220,7 +220,7 @@ Status CreateInterfacesClient(const std::string &server_address, int port,
 Status CreateInterfacesClient(const std::string &target,
                               std::shared_ptr<robot::InterfacesClient> &client);
 } // namespace factory
-} // namespace clientSDK
+} // namespace konka_sdk
 } // namespace humanoid_robot
 
 #endif // HUMANOID_ROBOT_INTERFACES_CLIENT_H

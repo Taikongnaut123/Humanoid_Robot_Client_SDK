@@ -9,8 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 查找依赖
 find_package(chric_protobuf_interfaces REQUIRED)
-find_package(chric_protobuf_ros2 REQUIRED)
-find_package(chric_protobuf_sdk_service REQUIRED)
 add_library(${TARGET_NAME} SHARED
     interfaces_client.cpp
     client_callback_server.cpp)
@@ -23,8 +21,6 @@ target_include_directories(
 
 ament_target_dependencies(${TARGET_NAME}
     "chric_protobuf_interfaces"
-    "chric_protobuf_ros2"
-    "chric_protobuf_sdk_service"
 )
 
 # 链接必要的库

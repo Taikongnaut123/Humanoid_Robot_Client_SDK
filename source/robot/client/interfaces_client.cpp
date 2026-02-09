@@ -13,10 +13,10 @@
 #include <iostream>
 #include <thread>
 
-#include "robot/common/errorCode.h"
+#include "robot/common/error_code.h"
 
-using namespace humanoid_robot::clientSDK::robot;
-using namespace humanoid_robot::clientSDK::common;
+using namespace humanoid_robot::konka_sdk::robot;
+using namespace humanoid_robot::konka_sdk::common;
 using namespace humanoid_robot::PB::interfaces;
 
 // Private implementation class
@@ -370,7 +370,7 @@ InterfacesClient::GetDeadline(int64_t timeout_ms) {
 // =================================================================
 
 // Factory functions implementation
-namespace humanoid_robot::clientSDK::factory {
+namespace humanoid_robot::konka_sdk::factory {
 // Preferred shared_ptr versions for async safety
 Status
 CreateInterfacesClient(const std::string &server_address, int port,
@@ -387,4 +387,4 @@ CreateInterfacesClient(const std::string &target,
       std::shared_ptr<robot::InterfacesClient>(new robot::InterfacesClient());
   return client->Connect(target);
 }
-} // namespace humanoid_robot::clientSDK::factory
+} // namespace humanoid_robot::konka_sdk::factory

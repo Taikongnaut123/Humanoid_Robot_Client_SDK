@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(chric_protobuf_interfaces REQUIRED)
 find_package(chric_protobuf_ros2 REQUIRED)
 find_package(chric_protobuf_sdk_service REQUIRED)
+find_package(chric_config_manager REQUIRED)
 
 message(STATUS "chric_protobuf_interfaces: ${chric_protobuf_interfaces_INCLUDE_DIRS}")
 message(STATUS "chric_protobuf_ros2: ${chric_protobuf_ros2_INCLUDE_DIRS}")
@@ -31,6 +32,7 @@ ament_target_dependencies(${TARGET_NAME}
     "chric_protobuf_interfaces"
     "chric_protobuf_ros2"
     "chric_protobuf_sdk_service"
+    "chric_config_manager"
 )
 
 # 链接必要的库

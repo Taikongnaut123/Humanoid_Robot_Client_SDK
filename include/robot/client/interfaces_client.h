@@ -20,6 +20,8 @@
 #include "interfaces/interfaces_request_response.pb.h"
 #include "robot/common/status.h"
 
+#include "ConfigManager/simple_config_manager.h"
+
 namespace humanoid_robot {
 namespace konka_sdk {
 namespace robot {
@@ -180,6 +182,8 @@ private:
   // Helper methods
   Status ConvertGrpcStatus(const grpc::Status &grpc_status);
   std::chrono::system_clock::time_point GetDeadline(int64_t timeout_ms);
+  std::unique_ptr<humanoid_robot::framework::common::ConfigManager> config_manager_;
+  humanoid_robot::framework::common::ConfigNode loaded_config_;
 };
 
 // =================================================================

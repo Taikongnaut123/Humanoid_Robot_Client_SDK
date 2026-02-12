@@ -41,7 +41,21 @@ public:
 // =================================================================
 
 InterfacesClient::InterfacesClient()
-    : pImpl_(std::make_unique<InterfacesClientImpl>()) {}
+    : pImpl_(std::make_unique<InterfacesClientImpl>()) {
+      std::string config_path = "config/software.yaml";
+      try {
+        loaded_config_ = config_manager_->LoadFromFile(config_path);
+        if (loaded_config_.IsEmpty()) {
+          std::cerr << "[InterfacesClient] Config file loaded but empty: " << config_path << std::endl;
+        } else {
+          std::cout << "[InterfacesClient] Config file loaded successfully: " << config_path << std::endl;
+        }
+      } catch (const std::exception& e) {
+        std::cerr << "[InterfacesClient] Failed to load config file: " << config_path 
+                  << ", error: " << e.what() << std::endl;
+        loaded_config_ = humanoid_robot::framework::common::ConfigNode(); // 初始化为空节点
+      }
+    }
 
 InterfacesClient::~InterfacesClient() = default;
 
@@ -58,10 +72,15 @@ Status InterfacesClient::Connect(const std::string &target) {
   try {
     pImpl_->target_ = target;
 
+    auto grpc_client_config = loaded_config_["software"]["communication"]["grpc_client"];
+    int max_receive_mb = std::stoi(grpc_client_config["channel"]["max_receive_mb"]);
+    int max_send_mb = std::stoi(grpc_client_config["channel"]["max_send_mb"]);
+    int channel_ready_timeout_ms = std::stoi(grpc_client_config["connection"]["channel_ready_timeout_ms"]);
+
     // Create gRPC channel with default credentials
     grpc::ChannelArguments args;
-    args.SetMaxReceiveMessageSize(100 * 1024 * 1024); // 100MB max message size
-    args.SetMaxSendMessageSize(100 * 1024 * 1024);
+    args.SetMaxReceiveMessageSize(max_receive_mb * 1024 * 1024); // 100MB max message size
+    args.SetMaxSendMessageSize(max_send_mb * 1024 * 1024);
 
     pImpl_->channel_ = grpc::CreateCustomChannel(
         target, grpc::InsecureChannelCredentials(), args);
@@ -81,7 +100,7 @@ Status InterfacesClient::Connect(const std::string &target) {
 
     pImpl_->connected_ = true;
 
-    if (!WaitForChannelReady(5000)) {
+    if (!WaitForChannelReady(channel_ready_timeout_ms)) {
       return Status(std::make_error_code(std::errc::connection_refused),
                     "Failed to create gRPC channel");
     }

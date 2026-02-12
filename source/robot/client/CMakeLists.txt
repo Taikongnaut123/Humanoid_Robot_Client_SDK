@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 查找依赖
 find_package(chric_protobuf_interfaces REQUIRED)
+find_package(chric_config_manager REQUIRED)
+
 add_library(${TARGET_NAME} SHARED
     interfaces_client.cpp
     client_callback_server.cpp)
@@ -21,6 +23,7 @@ target_include_directories(
 
 ament_target_dependencies(${TARGET_NAME}
     "chric_protobuf_interfaces"
+    "chric_config_manager"
 )
 
 # 链接必要的库
